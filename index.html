@@ -20,7 +20,7 @@
     .tab-active { border-bottom: 3px solid #0284c7; color: #0284c7; font-weight: 600; }
   </style>
 </head>
-<body class="p-3 md:p-6 text-slate-800">
+<body class="p-3 md:p-6 text-slate-800 flex flex-col min-h-screen relative">
 
   <!-- TELA DE CARREGAMENTO / SPINNER -->
   <div id="loading-overlay" class="hidden fixed inset-0 bg-black/40 backdrop-blur-xs flex flex-col items-center justify-center z-50 transition-opacity">
@@ -33,7 +33,18 @@
     </div>
   </div>
 
-  <div class="max-w-7xl mx-auto space-y-6">
+  <!-- BOTÃO FLUTUANTE DE SINCRONIZAÇÃO (APENAS MODO ADMIN - CANTO SUPERIOR DIREITO) -->
+  <div id="admin-sync-float" class="admin-only hidden fixed top-4 right-4 z-40 bg-indigo-900 text-white px-3 py-2 rounded-2xl shadow-2xl border border-indigo-700 flex items-center gap-2.5 transition-all hover:bg-indigo-800">
+    <div class="flex flex-col text-right">
+      <span class="text-[9px] text-indigo-300 font-semibold uppercase leading-tight">☁️ Sincronização Admin</span>
+      <span id="float-sync-time" class="text-[11px] font-bold text-white leading-tight">Carregando...</span>
+    </div>
+    <button onclick="syncDriveNow()" class="bg-indigo-600 hover:bg-indigo-500 text-white p-2 rounded-xl font-bold text-xs shadow transition flex items-center justify-center" title="Sincronizar Agora">
+      🔄
+    </button>
+  </div>
+
+  <div class="max-w-7xl mx-auto space-y-6 flex-1 w-full pt-4 md:pt-0">
     
     <!-- Cabeçalho Principal -->
     <header class="flex flex-col md:flex-row md:items-center md:justify-between bg-white p-5 rounded-2xl shadow-sm border border-slate-200 gap-4">
@@ -94,7 +105,7 @@
           <div>
             <span class="text-xs uppercase font-bold text-slate-400 block">Total Seringas</span>
             <span id="dash-syringes-val" class="text-2xl font-black text-slate-800">0</span>
-            <span id="dash-syringes-date" class="text-[11px] font-bold text-sky-700 block">Término: --/--/----</span>
+            <span id="dash-syringes-date" class="text-[11px] font-bold text-sky-700 block">Risco Falta: --/--/----</span>
             <span id="dash-syringes-status" class="text-[10px] font-bold block mt-0.5">--</span>
           </div>
         </div>
@@ -114,7 +125,7 @@
         <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3">
           <div class="p-3 bg-purple-100 text-purple-700 rounded-xl text-xl">📅</div>
           <div>
-            <span class="text-xs uppercase font-bold text-slate-400 block">Término Ampolas</span>
+            <span class="text-xs uppercase font-bold text-slate-400 block">Falta p/ Alguém (Ampolas)</span>
             <span id="dash-depletion-date" class="text-lg font-black text-slate-800">--/--/----</span>
             <span id="dash-depletion-weeks" class="text-[10px] text-slate-500 block">Calculando ritmo...</span>
           </div>
@@ -137,8 +148,8 @@
         <div class="lg:col-span-2 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
           <div class="flex justify-between items-center">
             <div>
-              <h3 class="font-bold text-slate-900 text-base">Tendência de Consumo & Previsão de Esgotamento</h3>
-              <p class="text-xs text-slate-500">Projeção temporal conjunta de ampolas (mg) e seringas (unidades) restantes por semana</p>
+              <h3 class="font-bold text-slate-900 text-base">Tendência de Consumo & Previsão de Falta no Estoque</h3>
+              <p class="text-xs text-slate-500">Projeção temporal indicando quando o estoque ficará abaixo de 3 aplicações (risco de alguém ficar sem tomar)</p>
             </div>
             <span class="text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200 px-2.5 py-1 rounded-lg">Projeção Semanal</span>
           </div>
@@ -386,6 +397,11 @@
     </div>
 
   </div>
+
+  <!-- RODAPÉ COM NÚMERO DA VERSÃO -->
+  <footer class="w-full text-center py-4 mt-8 text-xs text-slate-400 border-t border-slate-200">
+    Controle & Previsão de Tirzepatida • Versão <span class="font-bold text-slate-600">v1.9</span>
+  </footer>
 
   <!-- MODAL: GOOGLE DRIVE CONFIG -->
   <div id="modal-drive" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
@@ -650,10 +666,12 @@
 
     function renderTimestamp() {
       const badge = document.getElementById('last-update-badge');
-      if (appState.lastUpdated) {
-        badge.innerHTML = `<span>🕒</span> Última sinc: <strong>${appState.lastUpdated}</strong>`;
-      } else {
-        badge.innerHTML = `<span>🕒</span> Última sinc: Pendente`;
+      const floatTime = document.getElementById('float-sync-time');
+      const timeStr = appState.lastUpdated || 'Pendente';
+      
+      badge.innerHTML = `<span>🕒</span> Última sinc: <strong>${timeStr}</strong>`;
+      if (floatTime) {
+        floatTime.innerText = timeStr;
       }
     }
 
@@ -691,7 +709,7 @@
           appState.stock = data.stock || [];
           appState.logs = data.logs || [];
           appState.inflows = data.inflows || [];
-          appState.lastUpdated = data.lastUpdated || null;
+          appState.lastUpdated = data.lastUpdated || new Date().toLocaleString('pt-BR');
           renderTimestamp();
           updateUI();
         }
@@ -840,62 +858,57 @@
 
       document.getElementById('dash-syringes-val').innerText = totalSyringes;
       
-      // Total de ampolas em unidades e mg
       document.getElementById('dash-vials-count').innerText = `${activeVialsCount} un`;
       document.getElementById('dash-vials-val').innerText = `${totalStockMg.toFixed(1)} mg (Saldo total)`;
       
       document.getElementById('dash-profiles-val').innerText = (appState.profiles || []).length;
       document.getElementById('dash-weekly-mg').innerText = `${weeklyMg.toFixed(1)} mg / ${weeklySyringesCount} seringas sem.`;
 
-      // CÁLCULO DE SEMANAS E DATAS DE TÉRMINO
-      const weeksRemainingVials = weeklyMg > 0 ? (totalStockMg / weeklyMg) : 0;
+      const weeklyConsumptionMg = weeklyMg;
+      const weeksRemainingVials = weeklyConsumptionMg > 0 ? (totalStockMg / weeklyConsumptionMg) : 0;
+      
+      let weeksUntilCriticalVials = weeksRemainingVials - 3;
+      if (weeksUntilCriticalVials < 0) weeksUntilCriticalVials = 0;
+
       const targetDateVials = new Date();
-      targetDateVials.setDate(targetDateVials.getDate() + Math.round(weeksRemainingVials * 7));
-      const dateFormattedVials = weeklyMg > 0 ? targetDateVials.toLocaleDateString('pt-BR') : 'Indefinido';
+      targetDateVials.setDate(targetDateVials.getDate() + Math.round(weeksUntilCriticalVials * 7));
+      const dateFormattedVials = weeklyConsumptionMg > 0 ? targetDateVials.toLocaleDateString('pt-BR') : 'Indefinido';
 
       document.getElementById('dash-depletion-date').innerText = dateFormattedVials;
       const depletionWeeksEl = document.getElementById('dash-depletion-weeks');
       const vialStatusEl = document.getElementById('dash-vials-status');
 
-      if (weeklyMg === 0) {
+      if (weeklyConsumptionMg === 0) {
         depletionWeeksEl.innerText = 'Sem pacientes configurados';
         vialStatusEl.innerText = 'Sem consumo registrado';
         vialStatusEl.className = 'text-[10px] font-bold block text-slate-500';
-      } else if (weeksRemainingVials <= 2) {
-        depletionWeeksEl.innerText = `🚨 Restam aprox. ${weeksRemainingVials.toFixed(1)} semanas!`;
-        vialStatusEl.innerText = `🚨 ESTOQUE PARA 2 APLICAÇÕES OU MENOS!`;
-        vialStatusEl.className = 'text-[10px] font-bold block text-rose-600 animate-pulse';
       } else if (weeksRemainingVials <= 3) {
-        depletionWeeksEl.innerText = `⚠️ Restam aprox. ${weeksRemainingVials.toFixed(1)} semanas!`;
-        vialStatusEl.innerText = `⚠️ ESTOQUE PARA 3 APLICAÇÕES!`;
-        vialStatusEl.className = 'text-[10px] font-bold block text-amber-600';
+        depletionWeeksEl.innerText = `🚨 Estoque nas últimas 3 aplicações!`;
+        vialStatusEl.innerText = `🚨 RISCO IMINENTE DE ALGUÉM FICAR SEM TOMAR!`;
+        vialStatusEl.className = 'text-[10px] font-bold block text-rose-600 animate-pulse';
       } else {
-        depletionWeeksEl.innerText = `Dura aprox. ${weeksRemainingVials.toFixed(1)} semanas`;
-        vialStatusEl.innerText = `✅ Suficiente (${weeksRemainingVials.toFixed(1)} sem)`;
+        depletionWeeksEl.innerText = `Chega nas últimas 3 doses em aprox. ${weeksUntilCriticalVials.toFixed(1)} sem`;
+        vialStatusEl.innerText = `✅ Estoque Seguro (${weeksRemainingVials.toFixed(1)} sem tot.)`;
         vialStatusEl.className = 'text-[10px] font-bold block text-emerald-600';
       }
 
-      // Seringas
-      const weeksRemainingSyringes = weeklySyringesCount > 0 ? (totalSyringes / weeklySyringesCount) : 0;
+      let weeksUntilCriticalSyringes = weeksRemainingSyringesCalc(totalSyringes, weeklySyringesCount);
       const targetDateSyringes = new Date();
-      targetDateSyringes.setDate(targetDateSyringes.getDate() + Math.round(weeksRemainingSyringes * 7));
+      targetDateSyringes.setDate(targetDateSyringes.getDate() + Math.round(weeksUntilCriticalSyringes * 7));
       const dateFormattedSyringes = weeklySyringesCount > 0 ? targetDateSyringes.toLocaleDateString('pt-BR') : 'Indefinido';
 
-      document.getElementById('dash-syringes-date').innerText = `Término: ${dateFormattedSyringes}`;
+      document.getElementById('dash-syringes-date').innerText = `Risco Falta: ${dateFormattedSyringes}`;
       const sysStatusEl = document.getElementById('dash-syringes-status');
 
       if (weeklySyringesCount === 0) {
         sysStatusEl.innerText = 'Sem consumo semanal';
         sysStatusEl.className = 'text-[10px] font-bold block text-slate-500';
-      } else if (totalSyringes <= 2) {
-        sysStatusEl.innerText = '🚨 CRÍTICO: 2 ou menos seringas!';
+      } else if (totalSyringes <= 3) {
+        sysStatusEl.innerText = '🚨 CRÍTICO: Restam 3 ou menos!';
         sysStatusEl.className = 'text-[10px] font-bold block text-rose-600 animate-pulse';
-      } else if (totalSyringes === 3) {
-        sysStatusEl.innerText = '⚠️ ATENÇÃO: Apenas 3 seringas!';
+      } else if (totalSyringes <= 5) {
+        sysStatusEl.innerText = '⚠️ Atenção: Estoque baixo';
         sysStatusEl.className = 'text-[10px] font-bold block text-amber-600';
-      } else if (totalSyringes < 6) {
-        sysStatusEl.innerText = '⚠️ Baixo estoque (<6)';
-        sysStatusEl.className = 'text-[10px] font-bold block text-amber-500';
       } else {
         sysStatusEl.innerText = '✅ Estoque Estável';
         sysStatusEl.className = 'text-[10px] font-bold block text-emerald-600';
@@ -904,58 +917,32 @@
       const alertsContainer = document.getElementById('dash-alerts-container');
       alertsContainer.innerHTML = '';
 
-      if (totalSyringes <= 2) {
+      if (totalSyringes <= 3) {
         alertsContainer.innerHTML += `
           <div class="bg-rose-50 border border-rose-200 text-rose-800 p-4 rounded-2xl flex items-center justify-between shadow-sm">
             <div class="flex items-center gap-3">
               <span class="text-2xl">🚨</span>
               <div>
-                <h4 class="font-bold text-sm">ALERTA CRÍTICO DE SERINGAS: Restam apenas ${totalSyringes} unidade(s)!</h4>
-                <p class="text-xs text-rose-700">O estoque atingiu o limite igual ou inferior a 2 aplicações (Previsão de término: ${dateFormattedSyringes}).</p>
+                <h4 class="font-bold text-sm">ALERTA DE SERINGAS: Restam apenas ${totalSyringes} unidade(s) (Últimas 3 aplicações)!</h4>
+                <p class="text-xs text-rose-700">Risco iminente de alguém ficar sem tomar por falta de seringas.</p>
               </div>
             </div>
             ${isAdmin ? `<button onclick="openAddStockModal('seringa')" class="bg-rose-600 hover:bg-rose-700 text-white text-xs px-3.5 py-2 rounded-xl font-semibold transition">Comprar Seringas</button>` : ''}
           </div>
         `;
-      } else if (totalSyringes === 3) {
-        alertsContainer.innerHTML += `
-          <div class="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-2xl flex items-center justify-between shadow-sm">
-            <div class="flex items-center gap-3">
-              <span class="text-2xl">⚠️</span>
-              <div>
-                <h4 class="font-bold text-sm">ATENÇÃO: Restam apenas 3 seringas em estoque!</h4>
-                <p class="text-xs text-amber-700">Equivalente a 3 aplicações (Previsão de término: ${dateFormattedSyringes}).</p>
-              </div>
-            </div>
-            ${isAdmin ? `<button onclick="openAddStockModal('seringa')" class="bg-amber-600 hover:bg-amber-700 text-white text-xs px-3.5 py-2 rounded-xl font-semibold transition">Repor Seringas</button>` : ''}
-          </div>
-        `;
       }
 
-      if (weeksRemainingVials > 0 && weeksRemainingVials <= 2) {
+      if (weeksRemainingVials > 0 && weeksRemainingVials <= 3) {
         alertsContainer.innerHTML += `
           <div class="bg-rose-50 border border-rose-200 text-rose-800 p-4 rounded-2xl flex items-center justify-between shadow-sm">
             <div class="flex items-center gap-3">
               <span class="text-2xl">🚨</span>
               <div>
-                <h4 class="font-bold text-sm">ALERTA DE AMPOLAS: Estoque suficiente para apenas 2 aplicações ou menos!</h4>
-                <p class="text-xs text-rose-700">Previsão de término iminente do medicamento em ${dateFormattedVials}.</p>
+                <h4 class="font-bold text-sm">ALERTA DE AMPOLAS: O estoque atingiu as últimas 3 aplicações!</h4>
+                <p class="text-xs text-rose-700">Alguém poderá ficar sem tomar em breve se o frasco não for repuesto.</p>
               </div>
             </div>
             ${isAdmin ? `<button onclick="openAddStockModal('ampola')" class="bg-rose-600 hover:bg-rose-700 text-white text-xs px-3.5 py-2 rounded-xl font-semibold transition">Encomendar Ampola</button>` : ''}
-          </div>
-        `;
-      } else if (weeksRemainingVials > 2 && weeksRemainingVials <= 3) {
-        alertsContainer.innerHTML += `
-          <div class="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-2xl flex items-center justify-between shadow-sm">
-            <div class="flex items-center gap-3">
-              <span class="text-2xl">⚠️</span>
-              <div>
-                <h4 class="font-bold text-sm">ATENÇÃO NAS AMPOLAS: Estoque suficiente para apenas 3 aplicações!</h4>
-                <p class="text-xs text-amber-700">Previsão de término em ${dateFormattedVials}.</p>
-              </div>
-            </div>
-            ${isAdmin ? `<button onclick="openAddStockModal('ampola')" class="bg-amber-600 hover:bg-amber-700 text-white text-xs px-3.5 py-2 rounded-xl font-semibold transition">Ver Estoque</button>` : ''}
           </div>
         `;
       }
@@ -978,18 +965,24 @@
       const shoppingEl = document.getElementById('dash-shopping-list');
       shoppingEl.innerHTML = '';
       if (totalSyringes <= 3) {
-        shoppingEl.innerHTML += `<li class="flex items-center gap-2 text-rose-700 font-medium"><span>🛒</span> Comprar Seringas UI (Estoque atual: ${totalSyringes} un - Término: ${dateFormattedSyringes})</li>`;
+        shoppingEl.innerHTML += `<li class="flex items-center gap-2 text-rose-700 font-medium"><span>🛒</span> Comprar Seringas UI (Estoque atual: ${totalSyringes} un - Risco iminente)</li>`;
       } else {
         shoppingEl.innerHTML += `<li class="flex items-center gap-2 text-slate-500"><span>✅</span> Seringas com estoque suficiente (${totalSyringes} un).</li>`;
       }
 
       if (weeksRemainingVials <= 3) {
-        shoppingEl.innerHTML += `<li class="flex items-center gap-2 text-amber-700 font-medium"><span>🛒</span> Encomendar Nova Ampola/Frasco (Término: ${dateFormattedVials})</li>`;
+        shoppingEl.innerHTML += `<li class="flex items-center gap-2 text-rose-700 font-medium"><span>🛒</span> Encomendar Nova Ampola/Frasco (Nas últimas 3 doses)</li>`;
       } else {
-        shoppingEl.innerHTML += `<li class="flex items-center gap-2 text-slate-500"><span>✅</span> Ampolas com saldo para ${weeksRemainingVials.toFixed(0)} semanas.</li>`;
+        shoppingEl.innerHTML += `<li class="flex items-center gap-2 text-slate-500"><span>✅</span> Ampolas acima do limite de segurança de 3 doses.</li>`;
       }
 
       renderProjectionChart(totalStockMg, weeklyMg, totalSyringes, weeklySyringesCount);
+    }
+
+    function weeksRemainingSyringesCalc(totalSyringes, weeklySyringesCount) {
+      if (weeklySyringesCount === 0) return 0;
+      let remaining = totalSyringes - 3;
+      return remaining > 0 ? (remaining / weeklySyringesCount) : 0;
     }
 
     function renderProjectionChart(currentStockMg, weeklyMg, currentSyringes, weeklySyringesCount) {
@@ -1001,9 +994,7 @@
       let tempStock = currentStockMg;
       let tempSyringes = currentSyringes;
       
-      const maxWeeksVial = weeklyMg > 0 ? Math.ceil(currentStockMg / weeklyMg) : 0;
-      const maxWeeksSyringe = weeklySyringesCount > 0 ? Math.ceil(currentSyringes / weeklySyringesCount) : 0;
-      const weeksToProject = Math.max(maxWeeksVial, maxWeeksSyringe, 6);
+      const weeksToProject = 8;
 
       for (let i = 1; i <= weeksToProject; i++) {
         labels.push(`Semana ${i}`);
@@ -1012,11 +1003,11 @@
 
         vialPoints.push(parseFloat(tempStock.toFixed(1)));
         syringePoints.push(tempSyringes);
-
-        if (tempStock === 0 && tempSyringes === 0) break;
       }
 
       if (projectionChartInstance) projectionChartInstance.destroy();
+
+      const criticalMgLine = weeklyMg * 3;
 
       projectionChartInstance = new Chart(ctx, {
         type: 'line',
@@ -1031,8 +1022,8 @@
               fill: true,
               tension: 0.2,
               yAxisID: 'y',
-              pointBackgroundColor: vialPoints.map(v => v === 0 ? '#e11d48' : '#0284c7'),
-              pointRadius: vialPoints.map(v => v === 0 ? 7 : 4),
+              pointBackgroundColor: vialPoints.map(v => v <= criticalMgLine ? '#e11d48' : '#0284c7'),
+              pointRadius: vialPoints.map(v => v <= criticalMgLine ? 7 : 4),
             },
             {
               label: 'Seringas em Estoque (unidades)',
@@ -1042,8 +1033,8 @@
               borderDash: [5, 5],
               tension: 0.2,
               yAxisID: 'y1',
-              pointBackgroundColor: syringePoints.map(s => s <= 2 ? '#e11d48' : '#10b981'),
-              pointRadius: syringePoints.map(s => s <= 2 ? 7 : 4),
+              pointBackgroundColor: syringePoints.map(s => s <= 3 ? '#e11d48' : '#10b981'),
+              pointRadius: syringePoints.map(s => s <= 3 ? 7 : 4),
             }
           ]
         },
@@ -1058,10 +1049,10 @@
                   let val = context.raw;
                   let datasetLabel = context.dataset.label;
                   if (datasetLabel.includes('Ampolas')) {
-                    if (val === 0) return ' 🚨 Ampolas esgotadas!';
+                    if (val <= criticalMgLine) return ` 🚨 Risco: Estoque nas últimas 3 doses (${val} mg)`;
                     return ` Ampolas: ${val} mg restantes`;
                   } else {
-                    if (val <= 2) return ` 🚨 Seringas em nível crítico (${val} un)`;
+                    if (val <= 3) return ` 🚨 Risco: Apenas ${val} seringas restantes`;
                     return ` Seringas: ${val} un disponíveis`;
                   }
                 }
@@ -1084,7 +1075,7 @@
               grid: { drawOnChartArea: false },
               title: { display: true, text: 'Unidades - Seringas' } 
             },
-            x: { title: { display: true, text: 'Evolução Temporal Semanal (Consumo Total de Pacientes)' } }
+            x: { title: { display: true, text: 'Evolução Temporal Semanal' } }
           }
         }
       });
@@ -1149,14 +1140,11 @@
       const totalSyringes = getTotalSyringesCount();
       const badge = document.getElementById('syringe-badge');
 
-      if (totalSyringes <= 2) {
-        badge.innerText = '🚨 CRÍTICO (≤2)';
+      if (totalSyringes <= 3) {
+        badge.innerText = '🚨 CRÍTICO (≤3)';
         badge.className = 'bg-rose-100 text-rose-800 text-xs px-2.5 py-1 rounded-full font-semibold animate-pulse';
-      } else if (totalSyringes === 3) {
-        badge.innerText = '⚠️ ATENÇÃO (3)';
-        badge.className = 'bg-amber-100 text-amber-800 text-xs px-2.5 py-1 rounded-full font-semibold';
-      } else if (totalSyringes < 6) {
-        badge.innerText = '⚠️ BAIXO (<6)';
+      } else if (totalSyringes <= 5) {
+        badge.innerText = '⚠️ ATENÇÃO (≤5)';
         badge.className = 'bg-amber-100 text-amber-800 text-xs px-2.5 py-1 rounded-full font-semibold';
       } else {
         badge.innerText = 'OK';
