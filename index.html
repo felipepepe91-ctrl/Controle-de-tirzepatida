@@ -20,6 +20,11 @@
 
   <style>
     .tab-active { border-bottom: 3px solid #0284c7; color: #0284c7; font-weight: 600; }
+    /* O desfoque existe somente enquanto o login/cadastro estiver aberto. */
+    body.auth-screen > *:not(#modal-auth):not(script) { filter: blur(6px); pointer-events: none; user-select: none; }
+    #modal-auth { backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px); background: rgba(15, 23, 42, .38); }
+    #modal-auth > div { background: rgba(255,255,255,.92); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+    .dark #modal-auth > div { background: rgba(15,23,42,.92); }
     
     /* Estilização para o Slider da Calculadora Universal */
     input[type=range] {
@@ -84,6 +89,9 @@
           <span>➕</span> Lançar Aplicação
         </button>
         
+        <button onclick="openHouseModal()" class="admin-only hidden bg-amber-600 hover:bg-amber-700 text-white px-3.5 py-2 rounded-xl text-xs font-semibold">🏠 Casas</button>
+        <button onclick="openUserManager()" class="admin-only hidden bg-violet-600 hover:bg-violet-700 text-white px-3.5 py-2 rounded-xl text-xs font-semibold">👥 Usuários</button>
+
         <!-- Botões Apenas Admin -->
         <button onclick="openAddStockModal()" class="admin-only hidden bg-sky-600 hover:bg-sky-700 text-white px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
           <span>📦</span> Abastecer Estoque
@@ -159,6 +167,28 @@
       </div>
 
       <div id="dash-alerts-container" class="space-y-3"></div>
+
+      <section class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 class="font-bold text-slate-900 dark:text-white text-base">🚦 Alertas de reposição</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Previsões calculadas pelo consumo semanal cadastrado.</p>
+          </div>
+          <span id="dash-syringe-alert" class="text-xs font-bold px-3 py-1.5 rounded-full">Calculando seringas…</span>
+        </div>
+        <div id="dash-person-alerts" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+      </section>
+
+      <section class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 class="font-bold text-slate-900 dark:text-white text-base">🧰 Resumo de Cases na tela principal</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Quantidade de cases, ampolas em cada case e saldo acumulado em mg.</p>
+          </div>
+          <span id="dash-cases-count" class="text-xs font-bold px-3 py-1.5 rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300">0 cases</span>
+        </div>
+        <div id="dash-case-summary-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3"></div>
+      </section>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="lg:col-span-2 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 transition-colors">
@@ -470,6 +500,48 @@
 
   </div>
 
+  <!-- MODAL: LOGIN E TELA DE CADASTRO -->
+  <div id="modal-auth" class="hidden fixed inset-0 flex items-center justify-center p-4 z-50">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-md w-full space-y-4 border dark:border-slate-800 shadow-xl">
+      <div class="flex items-center justify-between"><h3 id="auth-modal-title" class="text-xl font-bold">🔐 Entrar no sistema</h3></div>
+      <p id="auth-modal-description" class="text-xs text-slate-500">Entre com seu usuário e senha.</p>
+      <div><label class="block text-xs font-semibold mb-1" for="auth-username">Usuário / e-mail</label><input id="auth-username" autocomplete="username" class="w-full border dark:border-slate-700 bg-transparent rounded-xl p-3" placeholder="Informe seu usuário" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('auth-password').focus();}"></div>
+      <div><label class="block text-xs font-semibold mb-1" for="auth-password">Senha</label><div class="relative"><input id="auth-password" type="password" autocomplete="current-password" class="w-full border dark:border-slate-700 bg-transparent rounded-xl p-3 pr-24" placeholder="Mínimo de 6 caracteres" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('auth-submit-button').click();}"><button type="button" id="auth-toggle-password" onclick="togglePasswordVisibility()" class="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Mostrar senha">👁 Mostrar</button></div></div>
+      <div id="register-house-wrap" class="hidden"><label class="block text-xs font-semibold mb-1">Nome da casa</label><input id="auth-house-name" class="w-full border dark:border-slate-700 bg-transparent rounded-xl p-3" placeholder="Ex.: Casa principal"></div>
+      <button id="auth-submit-button" onclick="loginLocal()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl py-2.5 font-semibold">Entrar</button>
+      <p id="auth-switch-text" class="text-sm text-center">Ainda não tem cadastro? <button type="button" onclick="toggleAuthMode('register')" class="text-indigo-600 dark:text-indigo-400 font-semibold underline">Criar cadastro</button></p>
+      <p id="auth-register-switch" class="hidden text-sm text-center">Já tem cadastro? <button type="button" onclick="toggleAuthMode('login')" class="text-indigo-600 dark:text-indigo-400 font-semibold underline">Voltar para o login</button></p>
+      <p class="text-[11px] text-amber-700 dark:text-amber-300">Protótipo: contas ficam neste navegador. Para proteger dados reais, use autenticação segura no servidor.</p>
+    </div>
+  </div>
+
+  <!-- MODAL: ADMINISTRAÇÃO DE USUÁRIOS -->
+  <div id="modal-users" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-lg w-full space-y-4 border dark:border-slate-800 shadow-xl">
+      <h3 class="text-lg font-bold">👥 Criar usuários</h3>
+      <p class="text-xs text-slate-500">As contas criadas aqui poderão consultar os dados e lançar aplicações. Vincule cada conta à casa correta.</p>
+      <div><label class="block text-xs font-semibold mb-1">Nome de usuário</label><input id="admin-new-username" class="w-full border dark:border-slate-700 bg-transparent rounded-xl p-2.5" autocomplete="off" placeholder="Ex.: usuario01"></div>
+      <div><label class="block text-xs font-semibold mb-1">Senha (mínimo 6 caracteres)</label><input id="admin-new-password" type="password" class="w-full border dark:border-slate-700 bg-transparent rounded-xl p-2.5" autocomplete="new-password"></div>
+      <div><label class="block text-xs font-semibold mb-1">Casa vinculada</label><select id="admin-new-house" class="w-full border dark:border-slate-700 bg-white dark:bg-slate-800 rounded-xl p-2.5"></select></div>
+      <button onclick="adminCreateUser()" class="w-full bg-violet-600 hover:bg-violet-700 text-white rounded-xl py-2.5 font-semibold">Criar usuário</button>
+      <div><h4 class="text-xs uppercase font-bold text-slate-400 mb-2">Contas cadastradas</h4><div id="admin-users-list" class="space-y-2 max-h-48 overflow-y-auto"></div></div>
+      <div class="text-right"><button onclick="closeModals()" class="bg-slate-200 dark:bg-slate-800 rounded-xl px-4 py-2">Fechar</button></div>
+      <p class="text-[11px] text-amber-700 dark:text-amber-300">Atenção: este protótipo guarda contas no navegador. O isolamento real entre usuários exige validação no servidor/Apps Script.</p>
+    </div>
+  </div>
+
+  <!-- MODAL: CASAS -->
+  <div id="modal-house" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-lg w-full space-y-4 border dark:border-slate-800 shadow-xl">
+      <h3 class="text-lg font-bold">🏠 Cadastro de casas</h3>
+      <div><label class="block text-xs font-semibold mb-1">Nome da casa / local</label><input id="house-name" class="w-full border dark:border-slate-700 bg-transparent rounded-xl p-2.5" placeholder="Ex.: Casa principal"></div>
+      <div><label class="block text-xs font-semibold mb-1">Descrição (opcional)</label><input id="house-description" class="w-full border dark:border-slate-700 bg-transparent rounded-xl p-2.5" placeholder="Endereço ou observação"></div>
+      <button onclick="saveHouse()" class="bg-indigo-600 text-white rounded-xl px-4 py-2 font-semibold">Salvar casa</button>
+      <div id="houses-list" class="space-y-2 max-h-48 overflow-y-auto"></div>
+      <div class="text-right"><button onclick="closeModals()" class="bg-slate-200 dark:bg-slate-800 rounded-xl px-4 py-2">Fechar</button></div>
+    </div>
+  </div>
+
   <!-- MODAL: GERENCIAR CASES -->
   <div id="modal-case" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
     <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-lg w-full space-y-4 border shadow-xl dark:border-slate-800">
@@ -481,6 +553,7 @@
           <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Nome do Case</label>
           <input type="text" id="case-name" placeholder="Ex: Case Viagem" class="w-full border dark:border-slate-700 bg-transparent rounded-xl p-2.5 text-sm text-slate-900 dark:text-white">
         </div>
+        <div class="mb-3"><label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Casa / local</label><select id="case-house" class="w-full border dark:border-slate-700 bg-white dark:bg-slate-800 rounded-xl p-2.5 text-sm"></select></div>
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Ícone</label>
@@ -606,10 +679,11 @@
           <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Vincular ao Case / Maleta</label>
           <select id="inflow-ampoule-case" class="w-full border dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl p-2.5 text-sm"></select>
         </div>
+        <div><label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Quantidade original de ampolas</label><input type="number" id="inflow-ampoule-qty" value="1" min="1" step="1" class="w-full border dark:border-slate-700 bg-transparent rounded-xl p-2.5 text-sm text-slate-900 dark:text-white"></div>
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Total Conteúdo (mg)</label>
-            <input type="number" id="inflow-ampoule-mg" value="15" step="any" class="w-full border dark:border-slate-700 bg-transparent rounded-xl p-2.5 text-sm text-slate-900 dark:text-white">
+            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Conteúdo por ampola (mg)</label>
+            <input type="number" id="inflow-ampoule-mg" value="15" min="0.1" step="any" class="w-full border dark:border-slate-700 bg-transparent rounded-xl p-2.5 text-sm text-slate-900 dark:text-white">
           </div>
           <div>
             <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Concentração (mg/mL)</label>
@@ -701,13 +775,16 @@
     let appState = {
       theme: localStorage.getItem('tirzepatida_theme') || 'light',
       syringes: { "50 UI (0,5 mL)": 5, "100 UI (1,0 mL)": 0 },
-      cases: [{ id: 'case-default', name: 'Maleta Principal', icon: '🧰', color: 'sky' }],
+      houses: JSON.parse(localStorage.getItem('tirz_houses') || 'null') || [{ id: 'house-default', name: 'Casa principal', description: '' }],
+      cases: [{ id: 'case-default', name: 'Maleta Principal', icon: '🧰', color: 'sky', houseId: 'house-default' }],
       profiles: [],
       stock: [],
       logs: [],
       inflows: [],
       lastUpdated: null
     };
+
+    function escapeHtml(value) { return String(value == null ? '' : value).replace(/[&<>\"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch])); }
 
     function applyTheme() {
       if (appState.theme === 'dark') {
@@ -735,20 +812,110 @@
     }
 
     function handleAuthClick() {
-      if (isAdmin) {
-        isAdmin = false;
+      if (currentUser || isAdmin) {
+        currentUser = null; isAdmin = false;
+        closeModals();
         applyPermissions();
-        alert('Você saiu do modo Administrador.');
-      } else {
-        const pass = prompt('Digite a senha de Administrador:');
-        if (pass === ADMIN_PASSWORD) {
-          isAdmin = true;
-          applyPermissions();
-          alert('Acesso como Administrador concedido!');
-        } else if (pass !== null) {
-          alert('Senha incorreta.');
-        }
+        // Recarrega o aplicativo para encerrar a sessão visual e voltar à tela de login.
+        location.reload();
+        return;
       }
+      toggleAuthMode('login');
+      document.body.classList.add('auth-screen');
+      document.getElementById('modal-auth').classList.remove('hidden');
+    }
+
+    function openUserManager() {
+      if (!isAdmin) return alert('Somente o administrador pode criar usuários.');
+      const houseSelect = document.getElementById('admin-new-house');
+      houseSelect.innerHTML = (appState.houses || []).map(h => `<option value="${h.id}">${escapeHtml(h.name)}</option>`).join('');
+      renderAdminUsers();
+      document.getElementById('modal-users').classList.remove('hidden');
+    }
+    function renderAdminUsers() {
+      const list = document.getElementById('admin-users-list');
+      list.innerHTML = localUsers().map(u => `<div class="flex items-center justify-between gap-2 p-2 rounded-lg border dark:border-slate-700"><div><div class="font-semibold text-sm">${escapeHtml(u.username)}</div><div class="text-xs text-slate-500">${escapeHtml(u.house || ((appState.houses || []).find(h => h.id === u.houseId) || {}).name || 'Casa não definida')} · ${u.role === 'admin' ? 'Administrador' : 'Consulta e aplicações'}</div></div>${u.role === 'admin' ? '<span class="text-xs">Admin</span>' : `<button onclick="adminDeleteUser('${String(u.username).replace(/'/g, '&#39;')}')" class="text-xs text-rose-600 font-semibold">Excluir</button>`}</div>`).join('') || '<p class="text-sm text-slate-500">Nenhum usuário cadastrado.</p>';
+    }
+    function adminCreateUser() {
+      if (!isAdmin) return alert('Apenas o administrador pode criar usuários.');
+      const username = document.getElementById('admin-new-username').value.trim().toLowerCase();
+      const password = document.getElementById('admin-new-password').value;
+      const houseId = document.getElementById('admin-new-house').value;
+      const house = (appState.houses || []).find(h => h.id === houseId);
+      if (username.length < 3) return alert('O usuário deve ter pelo menos 3 caracteres.');
+      if (password.length < 6) return alert('A senha deve ter pelo menos 6 caracteres.');
+      if (!house) return alert('Cadastre ou selecione uma casa antes de criar o usuário.');
+      const users = localUsers();
+      if (users.some(u => u.username === username)) return alert('Esse nome de usuário já existe.');
+      users.push({ username, password, role: 'user', houseId: house.id, house: house.name, permissions: ['consult', 'launch_application'] });
+      localStorage.setItem('tirz_users', JSON.stringify(users));
+      document.getElementById('admin-new-username').value = '';
+      document.getElementById('admin-new-password').value = '';
+      renderAdminUsers();
+      pushToDrive();
+      alert('Usuário criado. Ele poderá consultar e lançar aplicações na casa vinculada.');
+    }
+    function adminDeleteUser(username) {
+      if (!isAdmin) return alert('Apenas o administrador pode excluir usuários.');
+      if (!confirm('Excluir a conta ' + username + '? Os registros da casa não serão apagados.')) return;
+      localStorage.setItem('tirz_users', JSON.stringify(localUsers().filter(u => u.username !== username)));
+      renderAdminUsers();
+      pushToDrive();
+    }
+    function togglePasswordVisibility() {
+      const field = document.getElementById('auth-password');
+      const button = document.getElementById('auth-toggle-password');
+      const showing = field.type === 'password';
+      field.type = showing ? 'text' : 'password';
+      button.textContent = showing ? '🙈 Ocultar' : '👁 Mostrar';
+      button.setAttribute('aria-label', showing ? 'Ocultar senha' : 'Mostrar senha');
+    }
+
+    function toggleAuthMode(mode) {
+      const registering = mode === 'register';
+      document.getElementById('auth-modal-title').textContent = registering ? '📝 Criar cadastro' : '🔐 Entrar no sistema';
+      document.getElementById('auth-modal-description').textContent = registering ? 'Preencha os dados abaixo e informe o nome da casa que ficará vinculada à sua conta.' : 'Entre com seu usuário e senha.';
+      document.getElementById('register-house-wrap').classList.toggle('hidden', !registering);
+      document.getElementById('auth-submit-button').textContent = registering ? 'Criar minha conta' : 'Entrar';
+      document.getElementById('auth-submit-button').onclick = registering ? registerLocal : loginLocal;
+      document.getElementById('auth-switch-text').classList.toggle('hidden', registering);
+      document.getElementById('auth-register-switch').classList.toggle('hidden', !registering);
+      document.getElementById('auth-password').setAttribute('autocomplete', registering ? 'new-password' : 'current-password');
+      document.getElementById('auth-password').type = 'password';
+      document.getElementById('auth-toggle-password').textContent = '👁 Mostrar';
+      document.getElementById('auth-toggle-password').setAttribute('aria-label', 'Mostrar senha');
+    }
+    let currentUser = null;
+    function localUsers() { try { return JSON.parse(localStorage.getItem('tirz_users') || '[]'); } catch(e) { return []; } }
+    function registerLocal() {
+      const username = document.getElementById('auth-username').value.trim().toLowerCase();
+      const password = document.getElementById('auth-password').value;
+      const houseName = document.getElementById('auth-house-name').value.trim();
+      if (username.length < 3 || password.length < 6) return alert('Informe usuário com pelo menos 3 caracteres e senha com pelo menos 6 caracteres.');
+      if (!houseName) return alert('Informe o nome da casa para vincular ao cadastro.');
+      const users = localUsers();
+      if (users.some(u => u.username === username)) return alert('Esse usuário já existe neste navegador.');
+      appState.houses = appState.houses || [];
+      let house = appState.houses.find(h => h.name.trim().toLowerCase() === houseName.toLowerCase());
+      if (!house) {
+        house = { id: 'house-' + Date.now(), name: houseName, description: '' };
+        appState.houses.push(house);
+      }
+      const role = users.length === 0 ? 'admin' : 'user';
+      users.push({ username, password, role, houseId: house.id, house: house.name });
+      localStorage.setItem('tirz_users', JSON.stringify(users));
+      localStorage.setItem('tirz_houses', JSON.stringify(appState.houses));
+      pushToDrive();
+      alert(role === 'admin' ? 'Cadastro criado como administrador e vinculado à casa ' + house.name + '. Faça login.' : 'Cadastro criado e vinculado à casa ' + house.name + '. Faça login.');
+    }
+    function loginLocal() {
+      const username = document.getElementById('auth-username').value.trim().toLowerCase();
+      const password = document.getElementById('auth-password').value;
+      const user = localUsers().find(u => u.username === username && u.password === password);
+      if (user) { currentUser = user; isAdmin = user.role === 'admin'; document.body.classList.remove('auth-screen'); closeModals(); applyPermissions(); alert((isAdmin ? 'Login de administrador' : 'Login realizado') + '. Casa vinculada: ' + (user.house || (appState.houses.find(h => h.id === user.houseId) || {}).name || 'não definida') + '.'); return; }
+      // Compatibilidade temporária com a senha antiga do arquivo.
+      if (password === ADMIN_PASSWORD && username === 'admin') { isAdmin = true; closeModals(); applyPermissions(); alert('Acesso de administrador concedido. Crie uma conta própria para uso contínuo.'); return; }
+      alert('Usuário ou senha incorretos.');
     }
 
     function applyPermissions() {
@@ -761,14 +928,14 @@
       if (isAdmin) {
         badge.innerHTML = '🔑 Modo Administrador';
         badge.className = 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300 text-xs font-bold px-2.5 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800';
-        authLabel.innerText = 'Sair do Admin';
+        authLabel.innerText = 'Sair (' + ((currentUser && currentUser.username) || 'Admin') + ')';
         authIcon.innerText = '🔓';
         btnAuth.className = 'bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-sm';
         adminElements.forEach(el => el.classList.remove('hidden'));
       } else {
         badge.innerHTML = '👤 Modo Usuário';
         badge.className = 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-slate-200 dark:border-slate-700';
-        authLabel.innerText = 'Login Admin';
+        authLabel.innerText = 'Entrar / Cadastro';
         authIcon.innerText = '🔐';
         btnAuth.className = 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-sm border border-slate-200 dark:border-slate-700';
         adminElements.forEach(el => el.classList.add('hidden'));
@@ -814,6 +981,31 @@
       badge.innerHTML = `<span>🕒</span> Última sinc: <strong>${appState.lastUpdated || 'Pendente'}</strong>`;
     }
 
+    function buildDrivePayload() {
+      const usersForSheet = {};
+      localUsers().forEach(u => { usersForSheet[u.username] = { pass: u.password, house: u.house || ((appState.houses || []).find(h => h.id === u.houseId) || {}).name || '' }; });
+      const dataByHouse = {};
+      (appState.houses || []).forEach(h => { dataByHouse[h.name] = { logs: [], stock: [], inflows: [], syringes: appState.syringes || {} }; });
+      if (!Object.keys(dataByHouse).length) dataByHouse['Minha Casa'] = { logs: [], stock: [], inflows: [], syringes: appState.syringes || {} };
+      const getHouseForCase = caseId => {
+        const c = (appState.cases || []).find(x => x.id === caseId);
+        const h = c && (appState.houses || []).find(x => x.id === c.houseId);
+        return h ? h.name : (Object.keys(dataByHouse)[0] || 'Geral');
+      };
+      (appState.stock || []).forEach(item => { (dataByHouse[getHouseForCase(item.caseId)] || dataByHouse[Object.keys(dataByHouse)[0]]).stock.push(item); });
+      (appState.logs || []).forEach(log => {
+        const stockItem = (appState.stock || []).find(x => x.name === log.stockName);
+        const houseName = stockItem ? getHouseForCase(stockItem.caseId) : (Object.keys(dataByHouse)[0] || 'Geral');
+        (dataByHouse[houseName] || dataByHouse[Object.keys(dataByHouse)[0]]).logs.push(log);
+      });
+      (appState.inflows || []).forEach(inflow => {
+        const stockItem = (appState.stock || []).find(x => inflow.name && x.name && inflow.name.indexOf(x.name) >= 0);
+        const houseName = stockItem ? getHouseForCase(stockItem.caseId) : (Object.keys(dataByHouse)[0] || 'Geral');
+        (dataByHouse[houseName] || dataByHouse[Object.keys(dataByHouse)[0]]).inflows.push(inflow);
+      });
+      return { ...appState, users: Object.fromEntries(localUsers().map(u => [u.username, { pass: u.password, house: u.house || ((appState.houses || []).find(h => h.id === u.houseId) || {}).name || '', role: u.role, houseId: u.houseId }])), dataByHouse };
+    }
+
     async function pushToDrive() {
       if (!driveScriptUrl) return;
       showLoading(true);
@@ -823,7 +1015,7 @@
           method: 'POST',
           mode: 'no-cors',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(appState)
+          body: JSON.stringify(buildDrivePayload())
         });
       } catch (e) {
         console.error(e);
@@ -838,10 +1030,21 @@
       try {
         const res = await fetch(driveScriptUrl);
         const data = await res.json();
+        // A sincronização segue diretamente os dados retornados pelo Google Sheets, sem confirmação adicional.
+        if (data && data.users && !Array.isArray(data.users)) {
+          const importedUsers = Object.keys(data.users).map(username => {
+            const saved = data.users[username] || {};
+            const house = (data.houses || []).find(h => h.name === saved.house);
+            return { username, password: saved.pass || '', role: saved.role || (username === 'admin' ? 'admin' : 'user'), houseId: saved.houseId || (house && house.id) || '', house: saved.house || '' };
+          });
+          if (importedUsers.length) localStorage.setItem('tirz_users', JSON.stringify(importedUsers));
+        }
         if (data && (data.stock || data.profiles || data.cases || data.syringes)) {
           if (data.theme) { appState.theme = data.theme; applyTheme(); }
           appState.syringes = typeof data.syringes === 'number' ? { "50 UI (0,5 mL)": data.syringes, "100 UI (1,0 mL)": 0 } : (data.syringes || { "50 UI (0,5 mL)": 0, "100 UI (1,0 mL)": 0 });
-          appState.cases = data.cases || [{ id: 'case-default', name: 'Maleta Principal', icon: '🧰', color: 'sky' }];
+          appState.houses = data.houses || appState.houses || [{ id: 'house-default', name: 'Casa principal', description: '' }];
+          localStorage.setItem('tirz_houses', JSON.stringify(appState.houses));
+          appState.cases = data.cases || [{ id: 'case-default', name: 'Maleta Principal', icon: '🧰', color: 'sky', houseId: 'house-default' }];
           appState.profiles = (data.profiles || []).map(p => ({ ...p, active: p.active !== undefined ? p.active : true }));
           appState.stock = data.stock || [];
           appState.logs = data.logs || [];
@@ -866,11 +1069,31 @@
       document.getElementById('modal-case').classList.remove('hidden');
     }
 
+    function openHouseModal() { if (!isAdmin) return alert('Apenas administradores.'); renderHouses(); document.getElementById('modal-house').classList.remove('hidden'); }
+    function renderHouses() {
+      document.getElementById('houses-list').innerHTML = (appState.houses || []).map(h => `<div class="border dark:border-slate-700 rounded-xl p-3 text-sm"><strong>🏠 ${h.name}</strong><div class="text-xs text-slate-500">${h.description || 'Sem descrição'}</div><button onclick="deleteHouse('${h.id}')" class="text-rose-600 text-xs mt-1">Excluir</button></div>`).join('');
+    }
+    function saveHouse() {
+      if (!isAdmin) return alert('Apenas administradores.');
+      const name = document.getElementById('house-name').value.trim(); const description = document.getElementById('house-description').value.trim();
+      if (!name) return alert('Informe o nome da casa.');
+      appState.houses = appState.houses || []; appState.houses.push({ id: 'house-' + Date.now(), name, description });
+      document.getElementById('house-name').value = ''; document.getElementById('house-description').value = '';
+      localStorage.setItem('tirz_houses', JSON.stringify(appState.houses)); renderHouses(); updateUI(); pushToDrive();
+    }
+    function deleteHouse(id) {
+      if ((appState.houses || []).length <= 1) return alert('Mantenha pelo menos uma casa.');
+      if ((appState.cases || []).some(c => c.houseId === id)) return alert('Mova ou exclua os cases desta casa antes de removê-la.');
+      if (!confirm('Excluir esta casa?')) return;
+      appState.houses = appState.houses.filter(h => h.id !== id); localStorage.setItem('tirz_houses', JSON.stringify(appState.houses)); renderHouses(); updateUI(); pushToDrive();
+    }
+
     function resetCaseForm() {
       document.getElementById('edit-case-id').value = '';
       document.getElementById('case-name').value = '';
       document.getElementById('case-icon').value = '🧰';
       document.getElementById('case-color').value = 'sky';
+      const hs = document.getElementById('case-house'); if (hs) hs.innerHTML = (appState.houses || []).map(h => `<option value="${h.id}">${h.name}</option>`).join('');
       document.getElementById('modal-case-title').innerText = 'Gerenciar Cases / Maletas';
     }
 
@@ -879,15 +1102,16 @@
       const name = document.getElementById('case-name').value.trim();
       const icon = document.getElementById('case-icon').value;
       const color = document.getElementById('case-color').value;
+      const houseId = document.getElementById('case-house').value || (appState.houses[0] && appState.houses[0].id);
 
       if (!name) return alert('Informe o nome do case.');
       if (!appState.cases) appState.cases = [];
 
       if (id) {
         const c = appState.cases.find(x => x.id === id);
-        if (c) { c.name = name; c.icon = icon; c.color = color; }
+        if (c) { c.name = name; c.icon = icon; c.color = color; c.houseId = houseId; }
       } else {
-        appState.cases.push({ id: 'case-' + Date.now(), name, icon, color });
+        appState.cases.push({ id: 'case-' + Date.now(), name, icon, color, houseId });
       }
 
       resetCaseForm();
@@ -903,6 +1127,7 @@
       document.getElementById('case-name').value = c.name;
       document.getElementById('case-icon').value = c.icon;
       document.getElementById('case-color').value = c.color;
+      const hs = document.getElementById('case-house'); hs.innerHTML = (appState.houses || []).map(h => `<option value="${h.id}">${h.name}</option>`).join(''); hs.value = c.houseId || (appState.houses[0] && appState.houses[0].id);
       document.getElementById('modal-case-title').innerText = 'Editar Case / Maleta';
     }
 
@@ -1089,6 +1314,39 @@
       }
     }
 
+    function editStockQuantity(id) {
+      if (!isAdmin) return alert('Apenas administradores.');
+      const item = (appState.stock || []).find(s => s.id === id);
+      if (!item) return;
+
+      // Administrador pode corrigir a quantidade total de mg por ampola e os saldos que são enviados ao banco.
+      const currentPerAmp = Number(item.mgPerAmpoule || ((item.qtyOriginal || 1) ? item.totalMg / (item.qtyOriginal || 1) : item.totalMg) || 15);
+      const perAmpInput = prompt('Quantidade TOTAL em mg por ampola:', String(currentPerAmp).replace('.', ','));
+      if (perAmpInput === null) return;
+      const perAmp = Number(String(perAmpInput).replace(',', '.'));
+      if (!Number.isFinite(perAmp) || perAmp <= 0) return alert('Informe uma quantidade total em mg maior que zero.');
+
+      const originalInput = prompt('Quantidade ORIGINAL de ampolas:', item.qtyOriginal ?? 1);
+      if (originalInput === null) return;
+      const originalQty = parseInt(originalInput, 10);
+      if (!Number.isInteger(originalQty) || originalQty < 1) return alert('O total original deve ser um número inteiro maior que zero.');
+      const originalMg = originalQty * perAmp;
+
+      const remainingInput = prompt('SALDO RESTANTE em mg (de 0 a ' + originalMg.toLocaleString('pt-BR') + ' mg):', Math.min(Number(item.remainingMg ?? originalMg), originalMg).toString().replace('.', ','));
+      if (remainingInput === null) return;
+      const remainingMg = Number(String(remainingInput).replace(',', '.'));
+      if (!Number.isFinite(remainingMg) || remainingMg < 0 || remainingMg > originalMg) return alert('O saldo restante deve estar entre 0 e ' + originalMg + ' mg.');
+
+      item.qtyOriginal = originalQty;
+      item.mgPerAmpoule = perAmp;
+      item.totalMg = originalMg;
+      item.remainingMg = remainingMg;
+      item.qtyRemaining = Math.min(originalQty, remainingMg === 0 ? 0 : Math.ceil(remainingMg / perAmp));
+      updateUI();
+      pushToDrive();
+      alert('Quantidade total por ampola, total original e saldo restante atualizados e enviados para sincronização.');
+    }
+
     function deleteStockItem(id) {
       if (!isAdmin) return;
       if (confirm('Deseja realmente excluir esta ampola?')) {
@@ -1139,6 +1397,8 @@
       casesSummaryContainer.innerHTML = casesList.map(c => {
         const ampolasInCase = (appState.stock || []).filter(s => s.caseId === c.id || (!s.caseId && c === casesList[0]));
         const totalMgCase = ampolasInCase.reduce((acc, s) => acc + s.remainingMg, 0);
+        const totalQtyCase = ampolasInCase.reduce((acc, s) => acc + (s.qtyRemaining ?? (s.remainingMg > 0 ? 1 : 0)), 0);
+        const house = (appState.houses || []).find(h => h.id === c.houseId);
         return `
           <div class="p-4 rounded-2xl border bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 space-y-2 shadow-sm">
             <div class="flex items-center justify-between">
@@ -1147,11 +1407,11 @@
                 <h4 class="font-bold text-slate-900 dark:text-white text-sm">${c.name}</h4>
               </div>
               <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300">
-                ${ampolasInCase.length} ampolas
+                ${totalQtyCase} ampolas
               </span>
             </div>
             <div class="flex justify-between items-baseline pt-1">
-              <span class="text-xs text-slate-500">Saldo acumulado:</span>
+              <span class="text-xs text-slate-500">${house ? 'Casa: ' + house.name + ' · ' : ''}Saldo acumulado:</span>
               <span class="text-lg font-black text-sky-700 dark:text-sky-300">${totalMgCase.toFixed(1)} mg</span>
             </div>
           </div>
@@ -1237,7 +1497,8 @@
                 </div>
               </div>
             </div>
-            <p class="text-xs text-slate-400 dark:text-slate-500">Total Original: ${s.totalMg} mg | Concentração: ${s.conc} mg/mL</p>
+            <p class="text-xs text-slate-400 dark:text-slate-500">Original: ${s.qtyOriginal ?? 1} ampola(s) · ${s.totalMg} mg | Restante: ${s.qtyRemaining ?? (s.remainingMg > 0 ? 1 : 0)} ampola(s) · ${s.remainingMg.toFixed(1)} mg | ${s.conc} mg/mL</p>
+            <button onclick="editStockQuantity('${s.id}')" class="admin-only ${isAdmin ? '' : 'hidden'} text-xs text-sky-600 font-semibold">✏️ Editar total original e saldo restante</button>
             <div class="w-full bg-slate-100 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
               <div class="bg-sky-600 dark:bg-sky-500 h-full transition-all" style="width: ${pct}%"></div>
             </div>
@@ -1288,10 +1549,11 @@
     function renderDashboard() {
       const totalSyringes = getTotalSyringesCount();
       const activeProfiles = getActiveProfiles();
-      const weeklyMg = activeProfiles.reduce((acc, p) => acc + (p.doseMg || 0), 0);
+      const weeklyMg = activeProfiles.reduce((acc, p) => acc + (Number(p.doseMg) || 0), 0);
       const weeklySyringesCount = activeProfiles.length;
-      const totalStockMg = (appState.stock || []).reduce((acc, s) => acc + (s.remainingMg || 0), 0);
-      const activeVialsCount = (appState.stock || []).filter(s => s.remainingMg > 0).length;
+      const stock = appState.stock || [];
+      const totalStockMg = stock.reduce((acc, s) => acc + (Number(s.remainingMg) || 0), 0);
+      const activeVialsCount = stock.filter(s => (Number(s.remainingMg) || 0) > 0).reduce((sum, s) => sum + (Number(s.qtyRemaining ?? (s.remainingMg > 0 ? 1 : 0)) || 0), 0);
 
       document.getElementById('dash-syringes-val').innerText = totalSyringes;
       document.getElementById('dash-vials-count').innerText = `${activeVialsCount} un`;
@@ -1299,21 +1561,46 @@
       document.getElementById('dash-profiles-val').innerText = activeProfiles.length;
       document.getElementById('dash-weekly-mg').innerText = `${weeklyMg.toFixed(1)} mg / ${weeklySyringesCount} seringas sem.`;
 
-      const weeksRemainingVials = weeklyMg > 0 ? (totalStockMg / weeklyMg) : 0;
+      const weeksRemainingVials = weeklyMg > 0 ? totalStockMg / weeklyMg : 0;
       const targetDateVials = new Date();
-      targetDateVials.setDate(targetDateVials.getDate() + Math.round(weeksRemainingVials * 7));
-      document.getElementById('dash-depletion-date').innerText = weeklyMg > 0 ? targetDateVials.toLocaleDateString('pt-BR') : 'Indefinido';
+      targetDateVials.setDate(targetDateVials.getDate() + Math.ceil(weeksRemainingVials * 7));
+      document.getElementById('dash-depletion-date').innerText = weeklyMg > 0 && totalStockMg > 0 ? targetDateVials.toLocaleDateString('pt-BR') : 'Indefinido';
+      document.getElementById('dash-depletion-weeks').innerText = weeklyMg > 0 ? `Previsão: ${weeksRemainingVials.toFixed(1)} semana(s)` : 'Cadastre doses semanais para prever';
+      document.getElementById('dash-syringes-date').innerText = weeklySyringesCount > 0 ? `Término estimado: ${new Date(Date.now() + Math.ceil((totalSyringes / weeklySyringesCount) * 7) * 86400000).toLocaleDateString('pt-BR')}` : 'Término: indefinido';
+
+      const syringeAlert = document.getElementById('dash-syringe-alert');
+      if (totalSyringes <= 4) {
+        syringeAlert.className = 'text-xs font-bold px-3 py-1.5 rounded-full bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300';
+        syringeAlert.textContent = `🚨 CRÍTICO: ${totalSyringes} seringa(s)`;
+      } else if (totalSyringes <= 7) {
+        syringeAlert.className = 'text-xs font-bold px-3 py-1.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300';
+        syringeAlert.textContent = `⚠️ ATENÇÃO: ${totalSyringes} seringa(s)`;
+      } else {
+        syringeAlert.className = 'text-xs font-bold px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
+        syringeAlert.textContent = `✓ Estoque de seringas: ${totalSyringes}`;
+      }
+
+      const personAlerts = document.getElementById('dash-person-alerts');
+      const atRisk = activeProfiles.filter(p => Number(p.doseMg) > 0 && totalStockMg / Number(p.doseMg) <= 5);
+      personAlerts.innerHTML = activeProfiles.length === 0
+        ? '<p class="text-sm text-slate-500">Cadastre perfis com consumo semanal para gerar previsões.</p>'
+        : (atRisk.length ? atRisk.map(p => {
+            const dosesLeft = Math.max(0, Math.floor(totalStockMg / Number(p.doseMg)));
+            return `<div class="p-3 rounded-xl border border-amber-300 bg-amber-50 dark:bg-amber-950/40 dark:border-amber-800"><div class="font-bold text-amber-900 dark:text-amber-200">⚠️ ATENÇÃO — ${p.name}</div><p class="text-xs text-amber-800 dark:text-amber-300">Estimativa de até ${dosesLeft} dose(s) pelo consumo semanal cadastrado (${Number(p.doseMg).toFixed(1)} mg/semana).</p></div>`;
+          }).join('') : '<p class="text-sm text-emerald-700 dark:text-emerald-300">✓ Nenhum perfil está a 5 doses ou menos, conforme o consumo semanal cadastrado.</p>');
+
+      const cases = appState.cases || [{ id: 'case-default', name: 'Maleta Principal', icon: '🧰' }];
+      document.getElementById('dash-cases-count').textContent = `${cases.length} case(s)`;
+      document.getElementById('dash-case-summary-grid').innerHTML = cases.length ? cases.map((c, index) => {
+        const caseStock = stock.filter(s => s.caseId === c.id || (!s.caseId && index === 0));
+        const ampoules = caseStock.reduce((sum, s) => sum + (Number(s.qtyRemaining ?? (Number(s.remainingMg) > 0 ? 1 : 0)) || 0), 0);
+        const originalAmpoules = caseStock.reduce((sum, s) => sum + (Number(s.qtyOriginal ?? 0) || 0), 0);
+        const mg = caseStock.reduce((sum, s) => sum + (Number(s.remainingMg) || 0), 0);
+        return `<div class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"><div class="flex items-center justify-between gap-2"><h4 class="font-bold text-slate-900 dark:text-white">${c.icon || '🧰'} ${c.name}</h4><span class="text-xs rounded-full px-2 py-1 bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300">${ampoules} ampola(s)</span></div><div class="grid grid-cols-2 gap-2 mt-3"><div><p class="text-[11px] text-slate-500">Ampolas originais</p><p class="font-bold text-slate-800 dark:text-white">${originalAmpoules}</p></div><div><p class="text-[11px] text-slate-500">Saldo acumulado</p><p class="font-black text-sky-700 dark:text-sky-300">${mg.toFixed(1)} mg</p></div></div></div>`;
+      }).join('') : '<p class="text-sm text-slate-500">Nenhum case cadastrado.</p>';
 
       document.getElementById('dash-agenda-list').innerHTML = activeProfiles.length === 0 ? '<p class="text-slate-400">Nenhum paciente ativo.</p>' :
-        activeProfiles.map(p => `
-          <div class="flex justify-between items-center p-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
-            <div>
-              <span class="font-bold text-slate-800 dark:text-white block">${p.name}</span>
-              <span class="text-slate-500 dark:text-slate-400">Dia: ${p.day}</span>
-            </div>
-            <span class="font-extrabold text-sky-700 dark:text-sky-300 bg-sky-100 dark:bg-sky-950 px-2 py-1 rounded-lg">${p.doseMg} mg</span>
-          </div>
-        `).join('');
+        activeProfiles.map(p => `<div class="flex justify-between items-center p-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800"><div><span class="font-bold text-slate-800 dark:text-white block">${p.name}</span><span class="text-slate-500 dark:text-slate-400">Dia: ${p.day}</span></div><span class="font-extrabold text-sky-700 dark:text-sky-300 bg-sky-100 dark:bg-sky-950 px-2 py-1 rounded-lg">${p.doseMg} mg</span></div>`).join('');
 
       renderProjectionChart(totalStockMg, weeklyMg, totalSyringes, weeklySyringesCount);
     }
@@ -1389,7 +1676,15 @@
     }
 
     function closeModals() {
-      document.querySelectorAll('#modal-profile, #modal-inflow, #modal-log, #modal-drive, #modal-case').forEach(m => m.classList.add('hidden'));
+      // A tela de autenticação não pode ser fechada sem login.
+      document.querySelectorAll('#modal-profile, #modal-inflow, #modal-log, #modal-drive, #modal-case, #modal-users, #modal-house').forEach(m => m.classList.add('hidden'));
+      if (currentUser || isAdmin) {
+        document.body.classList.remove('auth-screen');
+        document.getElementById('modal-auth')?.classList.add('hidden');
+      } else {
+        document.body.classList.add('auth-screen');
+        document.getElementById('modal-auth')?.classList.remove('hidden');
+      }
     }
 
     function openProfileModal() {
@@ -1486,6 +1781,7 @@
       } else {
         const name = document.getElementById('inflow-ampoule-name').value.trim();
         const caseId = document.getElementById('inflow-ampoule-case').value;
+        const qty = Math.max(1, parseInt(document.getElementById('inflow-ampoule-qty').value, 10) || 1);
         const mg = parseFloat(document.getElementById('inflow-ampoule-mg').value.replace(',', '.')) || 0;
         const conc = parseFloat(document.getElementById('inflow-ampoule-conc').value.replace(',', '.')) || 15;
         if (!name || mg <= 0) return alert('Preencha os dados.');
@@ -1493,8 +1789,8 @@
         const c = (appState.cases || []).find(x => x.id === caseId);
         const caseTag = c ? ` [${c.icon} ${c.name}]` : '';
 
-        appState.stock.push({ id: Date.now().toString(), name, caseId, totalMg: mg, remainingMg: mg, conc });
-        appState.inflows.unshift({ id: Date.now().toString(), date, type: 'Ampola', name: name + caseTag, qtyDesc: `+${mg} mg`, conc: `${conc} mg/mL`, note });
+        appState.stock.push({ id: Date.now().toString(), name, caseId, qtyOriginal: qty, qtyRemaining: qty, totalMg: mg * qty, mgPerAmpoule: mg, remainingMg: mg * qty, conc });
+        appState.inflows.unshift({ id: Date.now().toString(), date, type: 'Ampola', name: name + caseTag, qtyDesc: `+${qty} ampolas (${mg * qty} mg)`, conc: `${conc} mg/mL`, note });
       }
 
       closeModals();
@@ -1576,6 +1872,7 @@
         if ((appState.syringes[syringeType] || 0) < 1) return alert(`Sem seringas de "${syringeType}"!`);
         appState.syringes[syringeType] -= 1;
         stock.remainingMg = Math.max(0, stock.remainingMg - mg);
+        stock.qtyRemaining = Math.min(stock.qtyOriginal ?? 1, Math.ceil(stock.remainingMg / (stock.mgPerAmpoule || stock.totalMg || 1))); 
         appState.logs.unshift({ id: Date.now().toString(), date, profileName: profile.name, weight, mg, ui, syringeType, stockName: stock.name, site });
       }
 
@@ -1614,6 +1911,9 @@
 
     window.onload = function() {
       applyTheme();
+      toggleAuthMode('login');
+      document.body.classList.add('auth-screen');
+      document.getElementById('modal-auth').classList.remove('hidden');
       setRulerMode('ui');
       calcUniversalFromMg();
       syncFromDrive();
