@@ -8,9 +8,7 @@
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    tailwind.config = {
-      darkMode: 'class',
-    }
+    tailwind.config = { darkMode: 'class' }
   </script>
   <!-- Chart.js para gráficos -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -43,7 +41,7 @@
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 p-3 md:p-6 transition-colors duration-200">
 
-  <!-- TELA DE CARREGAMENTO / SPINNER -->
+  <!-- SPINNER DE CARREGAMENTO -->
   <div id="loading-overlay" class="hidden fixed inset-0 bg-black/40 backdrop-blur-xs flex flex-col items-center justify-center z-50 transition-opacity">
     <div class="bg-white dark:bg-slate-900 px-6 py-5 rounded-2xl shadow-xl flex items-center gap-4 border border-slate-100 dark:border-slate-800">
       <div class="animate-spin rounded-full h-8 w-8 border-4 border-sky-500 border-t-transparent"></div>
@@ -72,12 +70,12 @@
       </div>
       
       <div class="flex flex-wrap gap-2 items-center">
-        <!-- BOTÃO DE TEMA (CLARO / ESCURO) -->
+        <!-- BOTÃO DE TEMA -->
         <button onclick="toggleTheme()" class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-sm border border-slate-200 dark:border-slate-700" title="Alternar Tema Claro/Escuro">
           <span id="theme-icon">🌙</span> <span id="theme-label">Escuro</span>
         </button>
 
-        <!-- BOTÃO DE LOGIN / ALTERNAR MODO -->
+        <!-- BOTÃO DE LOGIN ADMIN -->
         <button id="btn-auth" onclick="handleAuthClick()" class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-sm border border-slate-200 dark:border-slate-700">
           <span id="auth-icon">🔐</span> <span id="auth-label">Login Admin</span>
         </button>
@@ -89,6 +87,9 @@
         <!-- Botões Apenas Admin -->
         <button onclick="openAddStockModal()" class="admin-only hidden bg-sky-600 hover:bg-sky-700 text-white px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
           <span>📦</span> Abastecer Estoque
+        </button>
+        <button onclick="openCaseModal()" class="admin-only hidden bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+          <span>🧰</span> Gerenciar Cases
         </button>
         
         <button onclick="exportToExcel()" class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 px-3 py-2 rounded-xl text-xs font-semibold transition border border-slate-200 dark:border-slate-700">
@@ -106,7 +107,7 @@
       <button onclick="switchTab('simulador')" id="tab-simulador" class="tab-btn px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">🧮 Calc. Universal</button>
       <button onclick="switchTab('perfis')" id="tab-perfis" class="tab-btn px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">👥 Perfis</button>
       <button onclick="switchTab('peso')" id="tab-peso" class="tab-btn px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">⚖️ Evolução de Peso</button>
-      <button onclick="switchTab('estoque')" id="tab-estoque" class="tab-btn px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">📦 Estoque</button>
+      <button onclick="switchTab('estoque')" id="tab-estoque" class="tab-btn px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">📦 Estoque & Cases</button>
       <button onclick="switchTab('historico')" id="tab-historico" class="tab-btn px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">📝 Aplicações</button>
     </nav>
 
@@ -239,12 +240,10 @@
           </div>
         </div>
 
-        <!-- 3. Seringa de insulina: 50 UI ou 100 UI? + Seletor de Escala em % ou UI -->
+        <!-- 3. Seringa de insulina -->
         <div class="space-y-3 bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-700">
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200">Seringa de insulina: 50 UI ou 100 UI?</h3>
-            
-            <!-- OPÇÃO DE EXIBIÇÃO DA ESCALA EM % OU EM UI -->
             <div class="flex items-center gap-1.5 bg-white dark:bg-slate-900 p-1 rounded-xl border border-slate-300 dark:border-slate-700">
               <span class="text-[11px] font-semibold text-slate-500 px-1">Escala:</span>
               <button onclick="setRulerMode('ui')" id="btn-mode-ui" class="px-2.5 py-1 rounded-lg text-xs font-bold transition bg-slate-900 text-white">UI</button>
@@ -261,11 +260,7 @@
             <div id="syringe-fill" class="h-full bg-amber-500/80 transition-all duration-75" style="width: 16.7%;"></div>
           </div>
           
-          <!-- RÉGUA DINÂMICA (ALTERNA ENTRE UI E %) -->
-          <div id="ruler-labels" class="flex justify-between text-[11px] font-semibold text-slate-500 px-0.5">
-            <span>0</span><span>10</span><span>20</span><span>30</span><span>40</span>
-            <span>50</span><span>60</span><span>70</span><span>80</span><span>90</span><span>100</span>
-          </div>
+          <div id="ruler-labels" class="flex justify-between text-[11px] font-semibold text-slate-500 px-0.5"></div>
 
           <div class="pt-1">
             <input type="range" id="syringe-slider" min="0" max="100" value="16.7" step="0.1" oninput="calcUniversalFromSlider()">
@@ -273,9 +268,6 @@
 
           <p id="syringe-comparison-text" class="text-xs text-slate-700 dark:text-slate-300 font-medium mt-2">
             Sua dose de 16,7 UI é a mesma nas duas seringas. Na seringa de 100 UI ela ocupa 16,7% do volume.
-          </p>
-          <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-            Escolher 50 ou 100 UI <strong>não muda a dose</strong> — muda só o tamanho e a escala da seringa. As duas são <strong>U-100</strong> (100 UI por mL). A de 50 UI tem escala mais fina, mais fácil de ler doses pequenas, e cabe até 50 UI; a de 100 UI cabe até 100 UI.
           </p>
         </div>
 
@@ -314,20 +306,6 @@
           </button>
         </div>
 
-        <!-- Guia Rápido -->
-        <div class="bg-slate-50 dark:bg-slate-800/60 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3 mt-6">
-          <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2"><span>📖</span> Guia rápido</h3>
-          <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-            A unidade UI marcada nas seringas de insulina U-100 é uma medida de volume: 100 UI = 1 ml. Para converter uma dose em mg para UI, é indispensável conhecer a concentração da solução (mg/ml).
-          </p>
-          <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-            <strong>Fórmulas:</strong> volume (ml) = dose (mg) ÷ concentração (mg/ml) • UI = volume (ml) × 100. Exemplo: solução com 60 mg em 2 ml tem concentração de 30 mg/ml; uma dose de 2,5 mg equivale a 0,083 ml = 8,3 UI.
-          </p>
-          <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-            Atenção: a mesma dose em mg ocupa volumes diferentes conforme a concentração de cada produto. Sempre confira o rótulo da sua medicação e siga a orientação do seu médico prescritor.
-          </p>
-        </div>
-
       </div>
     </div>
 
@@ -337,7 +315,7 @@
         <div class="flex justify-between items-center mb-4">
           <div>
             <h2 class="text-lg font-bold text-slate-900 dark:text-white">Perfis de Pacientes</h2>
-            <p class="text-xs text-slate-500 dark:text-slate-400">Cadastre as pessoas e suas respectivas rotinas de dosagem semanal (cada paciente ativo consome 1 seringa por semana).</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Cadastre as pessoas e suas respectivas rotinas de dosagem semanal.</p>
           </div>
           <button onclick="openProfileModal()" class="admin-only hidden bg-sky-600 hover:bg-sky-700 text-white text-xs px-4 py-2 rounded-xl font-semibold transition">+ Nova Pessoa</button>
         </div>
@@ -379,15 +357,15 @@
       </div>
     </div>
 
-    <!-- ABA 4: ESTOQUE E NUVEM -->
+    <!-- ABA 4: ESTOQUE, CASES E NUVEM -->
     <div id="content-estoque" class="tab-content hidden space-y-6">
       
-      <!-- Caixa do Google Drive (APENAS MODO ADMIN) -->
+      <!-- BANNER DRIVE (ADMIN) -->
       <div id="drive-banner" class="admin-only hidden bg-indigo-900 text-white p-6 rounded-2xl shadow-md space-y-3">
         <div class="flex justify-between items-start">
           <div>
             <h3 class="text-lg font-bold flex items-center gap-2"><span>☁️</span> Sincronização em Nuvem (Google Drive)</h3>
-            <p class="text-xs text-indigo-200 mt-1">Conectado diretamente com a planilha central do Google Drive para acesso remoto compartilhado em tempo real.</p>
+            <p class="text-xs text-indigo-200 mt-1">Conectado diretamente com a planilha central do Google Drive para acesso remoto compartilhado.</p>
           </div>
           <button onclick="openDriveConfigModal()" class="bg-white text-indigo-900 text-xs px-4 py-2 rounded-xl font-bold hover:bg-indigo-50 transition">Gerenciar Link Drive</button>
         </div>
@@ -395,6 +373,18 @@
           <span id="drive-url-status">Conectado</span>
           <button onclick="syncDriveNow()" id="btn-sync-now" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1 rounded-lg font-medium">🔄 Sincronizar Agora</button>
         </div>
+      </div>
+
+      <!-- RESUMO ACUMULADO POR CASE -->
+      <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 space-y-4">
+        <div class="flex justify-between items-center">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2"><span>🧰</span> Resumo Acumulado por Case / Maleta</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Saldo atual de miligramas e ampolas agrupados por cada case.</p>
+          </div>
+          <button onclick="openCaseModal()" class="admin-only hidden bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs px-3.5 py-2 rounded-xl font-semibold transition">⚙️ Gerenciar Cases</button>
+        </div>
+        <div id="cases-summary-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
       </div>
 
       <!-- Controles de Estoque -->
@@ -405,7 +395,6 @@
             <span id="syringe-badge" class="bg-emerald-100 text-emerald-800 text-xs px-2.5 py-1 rounded-full font-semibold">OK</span>
           </div>
 
-          <!-- LISTA DE TIPOS DE SERINGAS -->
           <div id="syringes-breakdown-list" class="space-y-3"></div>
 
           <div class="flex gap-2 pt-2">
@@ -479,6 +468,58 @@
       </div>
     </div>
 
+  </div>
+
+  <!-- MODAL: GERENCIAR CASES -->
+  <div id="modal-case" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-lg w-full space-y-4 border shadow-xl dark:border-slate-800">
+      <h3 id="modal-case-title" class="text-lg font-bold text-slate-900 dark:text-white">Gerenciar Cases / Maletas</h3>
+      <input type="hidden" id="edit-case-id" value="">
+      
+      <div class="space-y-3 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border dark:border-slate-700">
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Nome do Case</label>
+          <input type="text" id="case-name" placeholder="Ex: Case Viagem" class="w-full border dark:border-slate-700 bg-transparent rounded-xl p-2.5 text-sm text-slate-900 dark:text-white">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Ícone</label>
+            <select id="case-icon" class="w-full border dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl p-2.5 text-sm">
+              <option value="🧰">🧰 Maleta / Case</option>
+              <option value="❄️">❄️ Geladeira</option>
+              <option value="🎒">🎒 Bolsa / Mochila</option>
+              <option value="🏥">🏥 Farmácia / Clínica</option>
+              <option value="🏠">🏠 Casa</option>
+              <option value="✈️">✈️ Viagem</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Cor de Destaque</label>
+            <select id="case-color" class="w-full border dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl p-2.5 text-sm">
+              <option value="sky">Azul Céu (Sky)</option>
+              <option value="indigo">Índigo</option>
+              <option value="emerald">Esmeralda (Verde)</option>
+              <option value="purple">Roxo (Purple)</option>
+              <option value="amber">Âmbar (Laranja)</option>
+              <option value="rose">Rosa / Vermelho</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 pt-1">
+          <button onclick="resetCaseForm()" class="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg">Limpar</button>
+          <button onclick="saveCase()" class="px-4 py-1.5 text-xs font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Salvar Case</button>
+        </div>
+      </div>
+
+      <div>
+        <h4 class="text-xs font-bold text-slate-400 uppercase mb-2">Cases Cadastrados</h4>
+        <div id="cases-management-list" class="space-y-2 max-h-48 overflow-y-auto"></div>
+      </div>
+
+      <div class="flex justify-end pt-2">
+        <button onclick="closeModals()" class="px-4 py-2 text-xs font-semibold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl">Fechar</button>
+      </div>
+    </div>
   </div>
 
   <!-- MODAL: GOOGLE DRIVE CONFIG -->
@@ -560,6 +601,10 @@
         <div>
           <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Nome / Identificação da Ampola</label>
           <input type="text" id="inflow-ampoule-name" placeholder="Ex: Frasco Manipulado 15mg" class="w-full border dark:border-slate-700 bg-transparent rounded-xl p-2.5 text-sm text-slate-900 dark:text-white">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Vincular ao Case / Maleta</label>
+          <select id="inflow-ampoule-case" class="w-full border dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl p-2.5 text-sm"></select>
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
@@ -643,22 +688,20 @@
   </div>
 
   <script>
-    const DEFAULT_DRIVE_URL = 'https://script.google.com/macros/s/AKfycbxet-Y6gXKGKa8WsOqGHlll-gkLJoqp5GT1sfnDQPCJTThuhM5pp4PmNmDhj185zTBO/exec';
+    const DEFAULT_DRIVE_URL = 'https://script.google.com/macros/s/AKfycbxEXnwpVBkKntQcBoQCcd5-q7RRG82LGSQVDOJeYuX4VCoFtAFBvFm8h8SaEFBkuFkG/exec';
     let driveScriptUrl = localStorage.getItem('tirzepatida_drive_url') || DEFAULT_DRIVE_URL;
     let isAdmin = false;
     const ADMIN_PASSWORD = 'admin123';
 
     let projectionChartInstance = null;
     let weightChartInstance = null;
-    let currentSyringeMaxUi = 100; // 50 UI ou 100 UI
-    let currentRulerMode = 'ui'; // 'ui' ou 'pct'
+    let currentSyringeMaxUi = 100;
+    let currentRulerMode = 'ui';
 
     let appState = {
       theme: localStorage.getItem('tirzepatida_theme') || 'light',
-      syringes: {
-        "50 UI (0,5 mL)": 5,
-        "100 UI (1,0 mL)": 0
-      },
+      syringes: { "50 UI (0,5 mL)": 5, "100 UI (1,0 mL)": 0 },
+      cases: [{ id: 'case-default', name: 'Maleta Principal', icon: '🧰', color: 'sky' }],
       profiles: [],
       stock: [],
       logs: [],
@@ -695,7 +738,7 @@
       if (isAdmin) {
         isAdmin = false;
         applyPermissions();
-        alert('Você saiu do modo Administrador e retornou ao Modo Usuário.');
+        alert('Você saiu do modo Administrador.');
       } else {
         const pass = prompt('Digite a senha de Administrador:');
         if (pass === ADMIN_PASSWORD) {
@@ -762,18 +805,13 @@
     }
 
     function updateTimestamp() {
-      const now = new Date();
-      appState.lastUpdated = now.toLocaleString('pt-BR');
+      appState.lastUpdated = new Date().toLocaleString('pt-BR');
       renderTimestamp();
     }
 
     function renderTimestamp() {
       const badge = document.getElementById('last-update-badge');
-      if (appState.lastUpdated) {
-        badge.innerHTML = `<span>🕒</span> Última sinc: <strong>${appState.lastUpdated}</strong>`;
-      } else {
-        badge.innerHTML = `<span>🕒</span> Última sinc: Pendente`;
-      }
+      badge.innerHTML = `<span>🕒</span> Última sinc: <strong>${appState.lastUpdated || 'Pendente'}</strong>`;
     }
 
     async function pushToDrive() {
@@ -788,7 +826,7 @@
           body: JSON.stringify(appState)
         });
       } catch (e) {
-        console.error('Erro ao enviar dados', e);
+        console.error(e);
       } finally {
         showLoading(false);
       }
@@ -800,20 +838,11 @@
       try {
         const res = await fetch(driveScriptUrl);
         const data = await res.json();
-        if (data && (data.stock || data.profiles || data.syringes)) {
-          if (data.theme) {
-            appState.theme = data.theme;
-            applyTheme();
-          }
-          if (typeof data.syringes === 'number') {
-            appState.syringes = { "50 UI (0,5 mL)": data.syringes, "100 UI (1,0 mL)": 0 };
-          } else {
-            appState.syringes = data.syringes || { "50 UI (0,5 mL)": 0, "100 UI (1,0 mL)": 0 };
-          }
-          appState.profiles = (data.profiles || []).map(p => ({
-            ...p,
-            active: p.active !== undefined ? p.active : true
-          }));
+        if (data && (data.stock || data.profiles || data.cases || data.syringes)) {
+          if (data.theme) { appState.theme = data.theme; applyTheme(); }
+          appState.syringes = typeof data.syringes === 'number' ? { "50 UI (0,5 mL)": data.syringes, "100 UI (1,0 mL)": 0 } : (data.syringes || { "50 UI (0,5 mL)": 0, "100 UI (1,0 mL)": 0 });
+          appState.cases = data.cases || [{ id: 'case-default', name: 'Maleta Principal', icon: '🧰', color: 'sky' }];
+          appState.profiles = (data.profiles || []).map(p => ({ ...p, active: p.active !== undefined ? p.active : true }));
           appState.stock = data.stock || [];
           appState.logs = data.logs || [];
           appState.inflows = data.inflows || [];
@@ -822,23 +851,90 @@
           updateUI();
         }
       } catch (e) {
-        console.error('Erro ao carregar do Drive', e);
+        console.error(e);
       } finally {
         showLoading(false);
       }
     }
 
-    function syncDriveNow() {
-      syncFromDrive();
+    function syncDriveNow() { syncFromDrive(); }
+
+    function openCaseModal() {
+      if (!isAdmin) return;
+      resetCaseForm();
+      renderCasesManagement();
+      document.getElementById('modal-case').classList.remove('hidden');
     }
 
-    // ==========================================
-    // FUNÇÕES DA CALCULADORA UNIVERSAL
-    // ==========================================
+    function resetCaseForm() {
+      document.getElementById('edit-case-id').value = '';
+      document.getElementById('case-name').value = '';
+      document.getElementById('case-icon').value = '🧰';
+      document.getElementById('case-color').value = 'sky';
+      document.getElementById('modal-case-title').innerText = 'Gerenciar Cases / Maletas';
+    }
+
+    function saveCase() {
+      const id = document.getElementById('edit-case-id').value;
+      const name = document.getElementById('case-name').value.trim();
+      const icon = document.getElementById('case-icon').value;
+      const color = document.getElementById('case-color').value;
+
+      if (!name) return alert('Informe o nome do case.');
+      if (!appState.cases) appState.cases = [];
+
+      if (id) {
+        const c = appState.cases.find(x => x.id === id);
+        if (c) { c.name = name; c.icon = icon; c.color = color; }
+      } else {
+        appState.cases.push({ id: 'case-' + Date.now(), name, icon, color });
+      }
+
+      resetCaseForm();
+      renderCasesManagement();
+      updateUI();
+      pushToDrive();
+    }
+
+    function editCase(id) {
+      const c = appState.cases.find(x => x.id === id);
+      if (!c) return;
+      document.getElementById('edit-case-id').value = c.id;
+      document.getElementById('case-name').value = c.name;
+      document.getElementById('case-icon').value = c.icon;
+      document.getElementById('case-color').value = c.color;
+      document.getElementById('modal-case-title').innerText = 'Editar Case / Maleta';
+    }
+
+    function deleteCase(id) {
+      if (appState.cases.length <= 1) return alert('Você precisa manter ao menos um case.');
+      if (confirm('Deseja excluir este case?')) {
+        appState.cases = appState.cases.filter(x => x.id !== id);
+        renderCasesManagement();
+        updateUI();
+        pushToDrive();
+      }
+    }
+
+    function renderCasesManagement() {
+      const list = document.getElementById('cases-management-list');
+      list.innerHTML = (appState.cases || []).map(c => `
+        <div class="flex items-center justify-between p-2.5 bg-white dark:bg-slate-900 border rounded-xl text-xs">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">${c.icon}</span>
+            <span class="font-bold text-slate-800 dark:text-white">${c.name}</span>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="editCase('${c.id}')" class="text-sky-600 font-semibold">Editar</button>
+            <button onclick="deleteCase('${c.id}')" class="text-rose-600 font-semibold">Excluir</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
     function fmtUniversal(val, decimals = 3) {
       if (isNaN(val) || val === null || val === undefined) return '0';
-      let str = Number(val.toFixed(decimals)).toString();
-      return str.replace('.', ',');
+      return Number(val.toFixed(decimals)).toString().replace('.', ',');
     }
 
     function getUniversalConc() {
@@ -859,9 +955,7 @@
         btn50.className = "px-4 py-2 rounded-xl text-xs font-bold transition bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700";
       }
 
-      const slider = document.getElementById('syringe-slider');
-      slider.max = maxUi;
-
+      document.getElementById('syringe-slider').max = maxUi;
       setRulerMode(currentRulerMode);
       calcUniversalFromUi();
     }
@@ -875,21 +969,15 @@
       if (mode === 'ui') {
         btnUi.className = "px-2.5 py-1 rounded-lg text-xs font-bold transition bg-slate-900 text-white";
         btnPct.className = "px-2.5 py-1 rounded-lg text-xs font-bold transition text-slate-700 dark:text-slate-300";
-        
         let step = currentSyringeMaxUi === 50 ? 5 : 10;
         let html = '';
-        for (let i = 0; i <= currentSyringeMaxUi; i += step) {
-          html += `<span>${i}</span>`;
-        }
+        for (let i = 0; i <= currentSyringeMaxUi; i += step) html += `<span>${i}</span>`;
         rulerContainer.innerHTML = html;
       } else {
         btnPct.className = "px-2.5 py-1 rounded-lg text-xs font-bold transition bg-slate-900 text-white";
         btnUi.className = "px-2.5 py-1 rounded-lg text-xs font-bold transition text-slate-700 dark:text-slate-300";
-        
         let html = '';
-        for (let i = 0; i <= 100; i += 10) {
-          html += `<span>${i}%</span>`;
-        }
+        for (let i = 0; i <= 100; i += 10) html += `<span>${i}%</span>`;
         rulerContainer.innerHTML = html;
       }
     }
@@ -897,7 +985,6 @@
     function updateUniversalUI(mg, ui, ml) {
       const conc = getUniversalConc();
       document.getElementById('badge-conc').innerText = `Concentração: ${fmtUniversal(conc, 2)} mg/ml`;
-
       document.getElementById('input-mg').value = isNaN(mg) ? '' : Number(mg.toFixed(3));
       document.getElementById('input-ui').value = isNaN(ui) ? '' : Number(ui.toFixed(1));
       document.getElementById('input-ml').value = isNaN(ml) ? '' : Number(ml.toFixed(3));
@@ -906,9 +993,7 @@
       const clampedPct = Math.min(Math.max(pctOfMax, 0), 100);
       
       document.getElementById('syringe-fill').style.width = `${clampedPct}%`;
-      
-      const slider = document.getElementById('syringe-slider');
-      slider.value = Math.min(ui, currentSyringeMaxUi);
+      document.getElementById('syringe-slider').value = Math.min(ui, currentSyringeMaxUi);
 
       document.getElementById('res-mg').innerText = fmtUniversal(mg, 3);
       document.getElementById('res-ui').innerText = fmtUniversal(ui, 1);
@@ -922,30 +1007,21 @@
     }
 
     function calcUniversalFromMg() {
-      const valStr = document.getElementById('input-mg').value.replace(',', '.');
-      const mg = parseFloat(valStr) || 0;
+      const mg = parseFloat(document.getElementById('input-mg').value.replace(',', '.')) || 0;
       const conc = getUniversalConc();
       const ml = conc > 0 ? mg / conc : 0;
-      const ui = ml * 100;
-      updateUniversalUI(mg, ui, ml);
+      updateUniversalUI(mg, ml * 100, ml);
     }
 
     function calcUniversalFromUi() {
-      const valStr = document.getElementById('input-ui').value.replace(',', '.');
-      const ui = parseFloat(valStr) || 0;
+      const ui = parseFloat(document.getElementById('input-ui').value.replace(',', '.')) || 0;
       const ml = ui / 100;
-      const conc = getUniversalConc();
-      const mg = ml * conc;
-      updateUniversalUI(mg, ui, ml);
+      updateUniversalUI(ml * getUniversalConc(), ui, ml);
     }
 
     function calcUniversalFromMl() {
-      const valStr = document.getElementById('input-ml').value.replace(',', '.');
-      const ml = parseFloat(valStr) || 0;
-      const ui = ml * 100;
-      const conc = getUniversalConc();
-      const mg = ml * conc;
-      updateUniversalUI(mg, ui, ml);
+      const ml = parseFloat(document.getElementById('input-ml').value.replace(',', '.')) || 0;
+      updateUniversalUI(ml * getUniversalConc(), ml * 100, ml);
     }
 
     function calcUniversalFromSlider() {
@@ -976,41 +1052,26 @@
       const conc = document.getElementById('badge-conc').innerText;
 
       const summaryText = `Resumo do Cálculo de Dose:\n- ${conc}\n- Dose: ${mg} mg\n- UI na Seringa de ${currentSyringeMaxUi} UI: ${ui} UI\n- Volume: ${ml} ml (${pct} da seringa)`;
-
-      navigator.clipboard.writeText(summaryText).then(() => {
-        alert('Resumo copiado para a área de transferência!');
-      }).catch(err => {
-        console.error('Erro ao copiar: ', err);
-      });
+      navigator.clipboard.writeText(summaryText).then(() => alert('Resumo copiado!'));
     }
 
     function saveUniversalPDF() {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
-
-      const mg = document.getElementById('res-mg').innerText;
-      const ui = document.getElementById('res-ui').innerText;
-      const ml = document.getElementById('res-ml').innerText;
-      const pct = document.getElementById('res-pct').innerText;
-      const conc = document.getElementById('badge-conc').innerText;
-
       doc.setFontSize(18);
-      doc.text("Calculadora Universal de Doses - Relatório", 14, 20);
-
+      doc.text("Calculadora Universal de Doses", 14, 20);
       doc.setFontSize(12);
-      doc.text(`${conc}`, 14, 35);
-      doc.text(`- Dose Desejada: ${mg} mg`, 14, 45);
-      doc.text(`- Marcação na Seringa (${currentSyringeMaxUi} UI): ${ui} UI`, 14, 55);
-      doc.text(`- Volume em ML: ${ml} ml`, 14, 65);
-      doc.text(`- Capacidade Ocupada da Seringa: ${pct}`, 14, 75);
-
+      doc.text(`${document.getElementById('badge-conc').innerText}`, 14, 35);
+      doc.text(`- Dose Desejada: ${document.getElementById('res-mg').innerText} mg`, 14, 45);
+      doc.text(`- Marcação Seringa (${currentSyringeMaxUi} UI): ${document.getElementById('res-ui').innerText} UI`, 14, 55);
+      doc.text(`- Volume: ${document.getElementById('res-ml').innerText} ml`, 14, 65);
       doc.save("Calculo_Dose.pdf");
     }
 
     function saveSyringeDirect(typeKey) {
-      if (!isAdmin) return alert('Apenas administradores podem alterar o estoque.');
-      const inputEl = document.getElementById(`syringe-input-${typeKey.replace(/[^a-zA-Z0-9]/g, '_')}`);
-      const val = parseInt(inputEl.value);
+      if (!isAdmin) return alert('Apenas administradores.');
+      const safeIdKey = typeKey.replace(/[^a-zA-Z0-9]/g, '_');
+      const val = parseInt(document.getElementById(`syringe-input-${safeIdKey}`).value);
       if (isNaN(val) || val < 0) return alert('Informe um número válido.');
       
       if (!appState.syringes) appState.syringes = {};
@@ -1030,7 +1091,7 @@
 
     function deleteStockItem(id) {
       if (!isAdmin) return;
-      if (confirm('Deseja realmente excluir esta ampola do estoque?')) {
+      if (confirm('Deseja realmente excluir esta ampola?')) {
         appState.stock = (appState.stock || []).filter(s => s.id !== id);
         updateUI();
         pushToDrive();
@@ -1049,397 +1110,11 @@
     }
 
     function getTotalSyringesCount() {
-      if (!appState.syringes) return 0;
-      return Object.values(appState.syringes).reduce((a, b) => a + (b || 0), 0);
+      return Object.values(appState.syringes || {}).reduce((a, b) => a + (b || 0), 0);
     }
 
     function getActiveProfiles() {
       return (appState.profiles || []).filter(p => p.active !== false);
-    }
-
-    function calculateWeeklyConsumptionMg() {
-      return getActiveProfiles().reduce((acc, p) => acc + (p.doseMg || 0), 0);
-    }
-
-    function calculateWeeklyConsumptionSyringes() {
-      return getActiveProfiles().length;
-    }
-
-    function calculateTotalStockMg() {
-      return (appState.stock || []).reduce((acc, s) => acc + (s.remainingMg || 0), 0);
-    }
-
-    function renderDashboard() {
-      const totalSyringes = getTotalSyringesCount();
-      const weeklyMg = calculateWeeklyConsumptionMg();
-      const weeklySyringesCount = calculateWeeklyConsumptionSyringes();
-      const totalStockMg = calculateTotalStockMg();
-      const activeVialsCount = (appState.stock || []).filter(s => s.remainingMg > 0).length;
-      const activeProfilesCount = getActiveProfiles().length;
-
-      document.getElementById('dash-syringes-val').innerText = totalSyringes;
-      document.getElementById('dash-vials-count').innerText = `${activeVialsCount} un`;
-      document.getElementById('dash-vials-val').innerText = `${totalStockMg.toFixed(1)} mg (Saldo total)`;
-      document.getElementById('dash-profiles-val').innerText = activeProfilesCount;
-      document.getElementById('dash-weekly-mg').innerText = `${weeklyMg.toFixed(1)} mg / ${weeklySyringesCount} seringas sem.`;
-
-      const weeksRemainingVials = weeklyMg > 0 ? (totalStockMg / weeklyMg) : 0;
-      const targetDateVials = new Date();
-      targetDateVials.setDate(targetDateVials.getDate() + Math.round(weeksRemainingVials * 7));
-      const dateFormattedVials = weeklyMg > 0 ? targetDateVials.toLocaleDateString('pt-BR') : 'Indefinido';
-
-      document.getElementById('dash-depletion-date').innerText = dateFormattedVials;
-      const depletionWeeksEl = document.getElementById('dash-depletion-weeks');
-      const vialStatusEl = document.getElementById('dash-vials-status');
-
-      if (weeklyMg === 0) {
-        depletionWeeksEl.innerText = 'Sem pacientes ativos configurados';
-        vialStatusEl.innerText = 'Sem consumo registrado';
-        vialStatusEl.className = 'text-[10px] font-bold block text-slate-500';
-      } else if (weeksRemainingVials <= 2) {
-        depletionWeeksEl.innerText = `🚨 Restam aprox. ${weeksRemainingVials.toFixed(1)} semanas!`;
-        vialStatusEl.innerText = `🚨 ESTOQUE PARA 2 APLICAÇÕES OU MENOS!`;
-        vialStatusEl.className = 'text-[10px] font-bold block text-rose-600 animate-pulse';
-      } else if (weeksRemainingVials <= 3) {
-        depletionWeeksEl.innerText = `⚠️ Restam aprox. ${weeksRemainingVials.toFixed(1)} semanas!`;
-        vialStatusEl.innerText = `⚠️ ESTOQUE PARA 3 APLICAÇÕES!`;
-        vialStatusEl.className = 'text-[10px] font-bold block text-amber-600';
-      } else {
-        depletionWeeksEl.innerText = `Dura aprox. ${weeksRemainingVials.toFixed(1)} semanas`;
-        vialStatusEl.innerText = `✅ Suficiente (${weeksRemainingVials.toFixed(1)} sem)`;
-        vialStatusEl.className = 'text-[10px] font-bold block text-emerald-600';
-      }
-
-      const weeksRemainingSyringes = weeklySyringesCount > 0 ? (totalSyringes / weeklySyringesCount) : 0;
-      const targetDateSyringes = new Date();
-      targetDateSyringes.setDate(targetDateSyringes.getDate() + Math.round(weeksRemainingSyringes * 7));
-      const dateFormattedSyringes = weeklySyringesCount > 0 ? targetDateSyringes.toLocaleDateString('pt-BR') : 'Indefinido';
-
-      document.getElementById('dash-syringes-date').innerText = `Término: ${dateFormattedSyringes}`;
-      const sysStatusEl = document.getElementById('dash-syringes-status');
-
-      if (weeklySyringesCount === 0) {
-        sysStatusEl.innerText = 'Sem consumo semanal';
-        sysStatusEl.className = 'text-[10px] font-bold block text-slate-500';
-      } else if (totalSyringes <= 2) {
-        sysStatusEl.innerText = '🚨 CRÍTICO: 2 ou menos seringas!';
-        sysStatusEl.className = 'text-[10px] font-bold block text-rose-600 animate-pulse';
-      } else if (totalSyringes === 3) {
-        sysStatusEl.innerText = '⚠️ ATENÇÃO: Apenas 3 seringas!';
-        sysStatusEl.className = 'text-[10px] font-bold block text-amber-600';
-      } else if (totalSyringes < 6) {
-        sysStatusEl.innerText = '⚠️ Estoque baixo (<6)';
-        sysStatusEl.className = 'text-[10px] font-bold block text-amber-500';
-      } else {
-        sysStatusEl.innerText = '✅ Estoque Estável';
-        sysStatusEl.className = 'text-[10px] font-bold block text-emerald-600';
-      }
-
-      const alertsContainer = document.getElementById('dash-alerts-container');
-      alertsContainer.innerHTML = '';
-
-      if (totalSyringes <= 2) {
-        alertsContainer.innerHTML += `
-          <div class="bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 text-rose-800 dark:text-rose-300 p-4 rounded-2xl flex items-center justify-between shadow-sm">
-            <div class="flex items-center gap-3">
-              <span class="text-2xl">🚨</span>
-              <div>
-                <h4 class="font-bold text-sm">ALERTA CRÍTICO DE SERINGAS: Restam apenas ${totalSyringes} unidade(s)!</h4>
-                <p class="text-xs text-rose-700 dark:text-rose-400">O estoque atingiu o limite igual ou inferior a 2 aplicações (Previsão de término: ${dateFormattedSyringes}).</p>
-              </div>
-            </div>
-            ${isAdmin ? `<button onclick="openAddStockModal('seringa')" class="bg-rose-600 hover:bg-rose-700 text-white text-xs px-3.5 py-2 rounded-xl font-semibold transition">Comprar Seringas</button>` : ''}
-          </div>
-        `;
-      } else if (totalSyringes === 3) {
-        alertsContainer.innerHTML += `
-          <div class="bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-300 p-4 rounded-2xl flex items-center justify-between shadow-sm">
-            <div class="flex items-center gap-3">
-              <span class="text-2xl">⚠️</span>
-              <div>
-                <h4 class="font-bold text-sm">ATENÇÃO: Restam apenas 3 seringas em estoque!</h4>
-                <p class="text-xs text-amber-700 dark:text-amber-400">Equivalente a 3 aplicações (Previsão de término: ${dateFormattedSyringes}).</p>
-              </div>
-            </div>
-            ${isAdmin ? `<button onclick="openAddStockModal('seringa')" class="bg-amber-600 hover:bg-amber-700 text-white text-xs px-3.5 py-2 rounded-xl font-semibold transition">Repor Seringas</button>` : ''}
-          </div>
-        `;
-      }
-
-      if (weeksRemainingVials > 0 && weeksRemainingVials <= 2) {
-        alertsContainer.innerHTML += `
-          <div class="bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 text-rose-800 dark:text-rose-300 p-4 rounded-2xl flex items-center justify-between shadow-sm">
-            <div class="flex items-center gap-3">
-              <span class="text-2xl">🚨</span>
-              <div>
-                <h4 class="font-bold text-sm">ALERTA DE AMPOLAS: Estoque suficiente para apenas 2 aplicações ou menos!</h4>
-                <p class="text-xs text-rose-700 dark:text-rose-400">Previsão de término iminente do medicamento em ${dateFormattedVials}.</p>
-              </div>
-            </div>
-            ${isAdmin ? `<button onclick="openAddStockModal('ampola')" class="bg-rose-600 hover:bg-rose-700 text-white text-xs px-3.5 py-2 rounded-xl font-semibold transition">Encomendar Ampola</button>` : ''}
-          </div>
-        `;
-      } else if (weeksRemainingVials > 2 && weeksRemainingVials <= 3) {
-        alertsContainer.innerHTML += `
-          <div class="bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-300 p-4 rounded-2xl flex items-center justify-between shadow-sm">
-            <div class="flex items-center gap-3">
-              <span class="text-2xl">⚠️</span>
-              <div>
-                <h4 class="font-bold text-sm">ATENÇÃO NAS AMPOLAS: Estoque suficiente para apenas 3 aplicações!</h4>
-                <p class="text-xs text-amber-700 dark:text-amber-400">Previsão de término em ${dateFormattedVials}.</p>
-              </div>
-            </div>
-            ${isAdmin ? `<button onclick="openAddStockModal('ampola')" class="bg-amber-600 hover:bg-amber-700 text-white text-xs px-3.5 py-2 rounded-xl font-semibold transition">Ver Estoque</button>` : ''}
-          </div>
-        `;
-      }
-
-      const agendaEl = document.getElementById('dash-agenda-list');
-      const activeProfiles = getActiveProfiles();
-      if (activeProfiles.length === 0) {
-        agendaEl.innerHTML = '<p class="text-slate-400">Nenhum paciente ativo cadastrado.</p>';
-      } else {
-        agendaEl.innerHTML = activeProfiles.map(p => `
-          <div class="flex justify-between items-center p-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
-            <div>
-              <span class="font-bold text-slate-800 dark:text-white block">${p.name}</span>
-              <span class="text-slate-500 dark:text-slate-400">Dia: ${p.day}</span>
-            </div>
-            <span class="font-extrabold text-sky-700 dark:text-sky-300 bg-sky-100 dark:bg-sky-950 px-2 py-1 rounded-lg">${p.doseMg} mg</span>
-          </div>
-        `).join('');
-      }
-
-      const shoppingEl = document.getElementById('dash-shopping-list');
-      shoppingEl.innerHTML = '';
-      if (totalSyringes <= 3) {
-        shoppingEl.innerHTML += `<li class="flex items-center gap-2 text-rose-700 dark:text-rose-400 font-medium"><span>🛒</span> Comprar Seringas UI (Estoque atual: ${totalSyringes} un - Término: ${dateFormattedSyringes})</li>`;
-      } else {
-        shoppingEl.innerHTML += `<li class="flex items-center gap-2 text-slate-500 dark:text-slate-400"><span>✅</span> Seringas com estoque suficiente (${totalSyringes} un).</li>`;
-      }
-
-      if (weeksRemainingVials <= 3) {
-        shoppingEl.innerHTML += `<li class="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-medium"><span>🛒</span> Encomendar Nova Ampola/Frasco (Término: ${dateFormattedVials})</li>`;
-      } else {
-        shoppingEl.innerHTML += `<li class="flex items-center gap-2 text-slate-500 dark:text-slate-400"><span>✅</span> Ampolas com saldo para ${weeksRemainingVials.toFixed(0)} semanas.</li>`;
-      }
-
-      renderProjectionChart(totalStockMg, weeklyMg, totalSyringes, weeklySyringesCount);
-    }
-
-    function renderProjectionChart(currentStockMg, weeklyMg, currentSyringes, weeklySyringesCount) {
-      const ctx = document.getElementById('projectionChart').getContext('2d');
-      const labels = ['Hoje'];
-      const vialPoints = [currentStockMg];
-      const syringePoints = [currentSyringes];
-
-      let tempStock = currentStockMg;
-      let tempSyringes = currentSyringes;
-      
-      const maxWeeksVial = weeklyMg > 0 ? Math.ceil(currentStockMg / weeklyMg) : 0;
-      const maxWeeksSyringe = weeklySyringesCount > 0 ? Math.ceil(currentSyringes / weeklySyringesCount) : 0;
-      const weeksToProject = Math.max(maxWeeksVial, maxWeeksSyringe, 6);
-
-      for (let i = 1; i <= weeksToProject; i++) {
-        labels.push(`Semana ${i}`);
-        tempStock = Math.max(0, tempStock - weeklyMg);
-        tempSyringes = Math.max(0, tempSyringes - weeklySyringesCount);
-
-        vialPoints.push(parseFloat(tempStock.toFixed(1)));
-        syringePoints.push(tempSyringes);
-
-        if (tempStock === 0 && tempSyringes === 0) break;
-      }
-
-      if (projectionChartInstance) projectionChartInstance.destroy();
-
-      projectionChartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [
-            {
-              label: 'Ampolas / Frascos (mg restantes)',
-              data: vialPoints,
-              borderColor: '#0284c7',
-              backgroundColor: 'rgba(2, 132, 199, 0.1)',
-              fill: true,
-              tension: 0.2,
-              yAxisID: 'y',
-              pointBackgroundColor: vialPoints.map(v => v === 0 ? '#e11d48' : '#0284c7'),
-              pointRadius: vialPoints.map(v => v === 0 ? 7 : 4),
-            },
-            {
-              label: 'Seringas em Estoque (unidades)',
-              data: syringePoints,
-              borderColor: '#10b981',
-              backgroundColor: 'transparent',
-              borderDash: [5, 5],
-              tension: 0.2,
-              yAxisID: 'y1',
-              pointBackgroundColor: syringePoints.map(s => s <= 2 ? '#e11d48' : '#10b981'),
-              pointRadius: syringePoints.map(s => s <= 2 ? 7 : 4),
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { 
-            legend: { 
-              display: true, 
-              position: 'top',
-              labels: { color: appState.theme === 'dark' ? '#cbd5e1' : '#334155' }
-            },
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  let val = context.raw;
-                  let datasetLabel = context.dataset.label;
-                  if (datasetLabel.includes('Ampolas')) {
-                    if (val === 0) return ' 🚨 Ampolas esgotadas!';
-                    return ` Ampolas: ${val} mg restantes`;
-                  } else {
-                    if (val <= 2) return ` 🚨 Seringas em nível crítico (${val} un)`;
-                    return ` Seringas: ${val} un disponíveis`;
-                  }
-                }
-              }
-            }
-          },
-          scales: {
-            y: { 
-              type: 'linear', 
-              display: true, 
-              position: 'left',
-              beginAtZero: true, 
-              grid: { color: appState.theme === 'dark' ? '#1e293b' : '#e2e8f0' },
-              ticks: { color: appState.theme === 'dark' ? '#94a3b8' : '#64748b' },
-              title: { display: true, text: 'Miligramas (mg) - Ampolas', color: appState.theme === 'dark' ? '#94a3b8' : '#64748b' } 
-            },
-            y1: { 
-              type: 'linear', 
-              display: true, 
-              position: 'right',
-              beginAtZero: true, 
-              grid: { drawOnChartArea: false },
-              ticks: { color: appState.theme === 'dark' ? '#94a3b8' : '#64748b' },
-              title: { display: true, text: 'Unidades - Seringas', color: appState.theme === 'dark' ? '#94a3b8' : '#64748b' } 
-            },
-            x: { 
-              grid: { color: appState.theme === 'dark' ? '#1e293b' : '#e2e8f0' },
-              ticks: { color: appState.theme === 'dark' ? '#94a3b8' : '#64748b' },
-              title: { display: true, text: 'Evolução Temporal Semanal (Consumo Total de Pacientes)', color: appState.theme === 'dark' ? '#94a3b8' : '#64748b' } 
-            }
-          }
-        }
-      });
-    }
-
-    function renderWeightTracking() {
-      const filterSelect = document.getElementById('weight-filter-profile');
-      const currentSelected = filterSelect ? filterSelect.value : 'all';
-
-      if (filterSelect) {
-        filterSelect.innerHTML = '<option value="all">Todos os Pacientes</option>' + 
-          (appState.profiles || []).map(p => `<option value="${p.name}" ${p.name === currentSelected ? 'selected' : ''}>${p.name}${p.active === false ? ' (Inativo)' : ''}</option>`).join('');
-      }
-
-      const selectedProfileName = filterSelect ? filterSelect.value : 'all';
-      const logsWithWeight = (appState.logs || []).filter(l => l.weight && l.weight > 0);
-
-      const colors = [
-        { border: '#10b981', bg: 'rgba(16, 185, 129, 0.1)' },
-        { border: '#0284c7', bg: 'rgba(2, 132, 199, 0.1)' },
-        { border: '#f59e0b', bg: 'rgba(245, 158, 11, 0.1)' },
-        { border: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.1)' },
-        { border: '#ec4899', bg: 'rgba(236, 72, 153, 0.1)' }
-      ];
-
-      let profilesToDisplay = (appState.profiles || []).map(p => p.name);
-      if (selectedProfileName !== 'all') {
-        profilesToDisplay = [selectedProfileName];
-      }
-
-      const filteredLogs = selectedProfileName === 'all' 
-        ? logsWithWeight 
-        : logsWithWeight.filter(l => l.profileName === selectedProfileName);
-
-      filteredLogs.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-      const uniqueDates = [...new Set(filteredLogs.map(l => l.date))].sort((a, b) => new Date(a) - new Date(b));
-
-      const datasets = profilesToDisplay.map((profileName, index) => {
-        const color = colors[index % colors.length];
-        
-        const data = uniqueDates.map(date => {
-          const log = logsWithWeight.find(l => l.profileName === profileName && l.date === date);
-          return log ? log.weight : null;
-        });
-
-        return {
-          label: profileName,
-          data: data,
-          borderColor: color.border,
-          backgroundColor: color.bg,
-          fill: false,
-          tension: 0.2,
-          pointRadius: 6,
-          pointBackgroundColor: color.border,
-          spanGaps: true
-        };
-      }).filter(dataset => dataset.data.some(val => val !== null));
-
-      const ctx = document.getElementById('weightChart').getContext('2d');
-      if (weightChartInstance) weightChartInstance.destroy();
-
-      weightChartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: uniqueDates,
-          datasets: datasets
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { 
-              display: true,
-              position: 'top',
-              labels: { color: appState.theme === 'dark' ? '#cbd5e1' : '#334155' } 
-            },
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  return ` ${context.dataset.label}: ${context.raw} kg`;
-                }
-              }
-            }
-          },
-          scales: {
-            y: { 
-              grid: { color: appState.theme === 'dark' ? '#1e293b' : '#e2e8f0' },
-              ticks: { color: appState.theme === 'dark' ? '#94a3b8' : '#64748b' },
-              title: { display: true, text: 'Peso (kg)', color: appState.theme === 'dark' ? '#94a3b8' : '#64748b' } 
-            },
-            x: { 
-              grid: { color: appState.theme === 'dark' ? '#1e293b' : '#e2e8f0' },
-              ticks: { color: appState.theme === 'dark' ? '#94a3b8' : '#64748b' },
-              title: { display: true, text: 'Data da Aplicação', color: appState.theme === 'dark' ? '#94a3b8' : '#64748b' } 
-            }
-          }
-        }
-      });
-
-      const tableBody = document.getElementById('weight-table-body');
-      tableBody.innerHTML = filteredLogs.map(l => `
-        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-          <td class="p-3 font-medium">${l.date}</td>
-          <td class="p-3 font-semibold">${l.profileName}</td>
-          <td class="p-3 font-bold text-emerald-700 dark:text-emerald-400">${l.weight} kg</td>
-          <td class="p-3">${l.mg} mg</td>
-        </tr>
-      `).join('');
     }
 
     function updateUI() {
@@ -1449,10 +1124,7 @@
       if (totalSyringes <= 2) {
         badge.innerText = '🚨 CRÍTICO (≤2)';
         badge.className = 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 text-xs px-2.5 py-1 rounded-full font-semibold animate-pulse';
-      } else if (totalSyringes === 3) {
-        badge.innerText = '⚠️ ATENÇÃO (3)';
-        badge.className = 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 text-xs px-2.5 py-1 rounded-full font-semibold';
-      } else if (totalSyringes < 6) {
+      } else if (totalSyringes <= 5) {
         badge.innerText = '⚠️ BAIXO (<6)';
         badge.className = 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 text-xs px-2.5 py-1 rounded-full font-semibold';
       } else {
@@ -1460,15 +1132,40 @@
         badge.className = 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 text-xs px-2.5 py-1 rounded-full font-semibold';
       }
 
+      // RESUMO DE CASES
+      const casesSummaryContainer = document.getElementById('cases-summary-grid');
+      const casesList = appState.cases || [{ id: 'case-default', name: 'Maleta Principal', icon: '🧰', color: 'sky' }];
+      
+      casesSummaryContainer.innerHTML = casesList.map(c => {
+        const ampolasInCase = (appState.stock || []).filter(s => s.caseId === c.id || (!s.caseId && c === casesList[0]));
+        const totalMgCase = ampolasInCase.reduce((acc, s) => acc + s.remainingMg, 0);
+        return `
+          <div class="p-4 rounded-2xl border bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 space-y-2 shadow-sm">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="text-2xl">${c.icon || '🧰'}</span>
+                <h4 class="font-bold text-slate-900 dark:text-white text-sm">${c.name}</h4>
+              </div>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300">
+                ${ampolasInCase.length} ampolas
+              </span>
+            </div>
+            <div class="flex justify-between items-baseline pt-1">
+              <span class="text-xs text-slate-500">Saldo acumulado:</span>
+              <span class="text-lg font-black text-sky-700 dark:text-sky-300">${totalMgCase.toFixed(1)} mg</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // LISTA DE SERINGAS
       const syringesListContainer = document.getElementById('syringes-breakdown-list');
       const syringeTypes = ["50 UI (0,5 mL)", "100 UI (1,0 mL)"];
-      
       if (!appState.syringes) appState.syringes = { "50 UI (0,5 mL)": 0, "100 UI (1,0 mL)": 0 };
 
       syringesListContainer.innerHTML = syringeTypes.map(typeKey => {
         const count = appState.syringes[typeKey] || 0;
         const safeIdKey = typeKey.replace(/[^a-zA-Z0-9]/g, '_');
-        
         if (isAdmin) {
           return `
             <div class="p-3 bg-slate-50 dark:bg-slate-800/50 border dark:border-slate-700 rounded-xl flex items-center justify-between">
@@ -1495,8 +1192,8 @@
         }
       }).join('');
 
-      const profileContainer = document.getElementById('profiles-list');
-      profileContainer.innerHTML = (appState.profiles || []).map(p => {
+      // LISTA DE PACIENTES
+      document.getElementById('profiles-list').innerHTML = (appState.profiles || []).map(p => {
         const uiCalc = Math.round((p.doseMg / 15) * 100);
         const isActive = p.active !== false;
         return `
@@ -1521,19 +1218,22 @@
         `;
       }).join('');
 
-      const stockContainer = document.getElementById('stock-list');
-      stockContainer.innerHTML = (appState.stock || []).map((s, idx) => {
+      // LISTA DE AMPOLAS
+      document.getElementById('stock-list').innerHTML = (appState.stock || []).map((s, idx) => {
         const pct = Math.max(0, (s.remainingMg / s.totalMg) * 100);
+        const c = casesList.find(x => x.id === s.caseId) || casesList[0];
         return `
           <div class="p-3 border dark:border-slate-800 rounded-xl space-y-1 bg-white dark:bg-slate-800/40 relative">
             <div class="flex justify-between items-center">
-              <h5 class="font-semibold text-sm text-slate-800 dark:text-white">${s.name}</h5>
+              <h5 class="font-semibold text-sm text-slate-800 dark:text-white">
+                ${s.name} <span class="text-[11px] text-indigo-600 dark:text-indigo-400 font-bold">(${c ? c.icon + ' ' + c.name : 'Geral'})</span>
+              </h5>
               <div class="flex items-center gap-2">
                 <span class="text-xs font-bold text-sky-700 dark:text-sky-400">${s.remainingMg.toFixed(1)} mg restantes</span>
                 <div class="admin-only ${isAdmin ? '' : 'hidden'} flex items-center gap-1 border-l dark:border-slate-700 pl-2 ml-1">
-                  <button onclick="moveStockItem(${idx}, -1)" ${idx === 0 ? 'disabled class="opacity-30 cursor-not-allowed"' : ''} class="text-xs bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 p-1 rounded font-bold" title="Mover para Cima">⬆️</button>
-                  <button onclick="moveStockItem(${idx}, 1)" ${idx === (appState.stock.length - 1) ? 'disabled class="opacity-30 cursor-not-allowed"' : ''} class="text-xs bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 p-1 rounded font-bold" title="Mover para Baixo">⬇️</button>
-                  <button onclick="deleteStockItem('${s.id}')" class="text-rose-600 dark:text-rose-400 hover:text-rose-800 text-xs p-1 rounded font-semibold" title="Excluir Ampola">🗑️</button>
+                  <button onclick="moveStockItem(${idx}, -1)" ${idx === 0 ? 'disabled class="opacity-30 cursor-not-allowed"' : ''} class="text-xs bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 p-1 rounded font-bold">⬆️</button>
+                  <button onclick="moveStockItem(${idx}, 1)" ${idx === (appState.stock.length - 1) ? 'disabled class="opacity-30 cursor-not-allowed"' : ''} class="text-xs bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 p-1 rounded font-bold">⬇️</button>
+                  <button onclick="deleteStockItem('${s.id}')" class="text-rose-600 dark:text-rose-400 hover:text-rose-800 text-xs p-1 rounded font-semibold">🗑️</button>
                 </div>
               </div>
             </div>
@@ -1545,8 +1245,8 @@
         `;
       }).join('');
 
-      const logsContainer = document.getElementById('logs-table');
-      logsContainer.innerHTML = (appState.logs || []).map(l => `
+      // HISTÓRICO DE LOGS
+      document.getElementById('logs-table').innerHTML = (appState.logs || []).map(l => `
         <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
           <td class="p-3 font-medium">${l.date}</td>
           <td class="p-3 font-semibold">${l.profileName}</td>
@@ -1565,8 +1265,8 @@
         </tr>
       `).join('');
 
-      const inflowContainer = document.getElementById('inflow-table');
-      inflowContainer.innerHTML = (appState.inflows || []).map(i => `
+      // HISTÓRICO DE ABASTECIMENTOS
+      document.getElementById('inflow-table').innerHTML = (appState.inflows || []).map(i => `
         <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
           <td class="p-3 font-medium">${i.date}</td>
           <td class="p-3">
@@ -1585,8 +1285,111 @@
       renderDashboard();
     }
 
+    function renderDashboard() {
+      const totalSyringes = getTotalSyringesCount();
+      const activeProfiles = getActiveProfiles();
+      const weeklyMg = activeProfiles.reduce((acc, p) => acc + (p.doseMg || 0), 0);
+      const weeklySyringesCount = activeProfiles.length;
+      const totalStockMg = (appState.stock || []).reduce((acc, s) => acc + (s.remainingMg || 0), 0);
+      const activeVialsCount = (appState.stock || []).filter(s => s.remainingMg > 0).length;
+
+      document.getElementById('dash-syringes-val').innerText = totalSyringes;
+      document.getElementById('dash-vials-count').innerText = `${activeVialsCount} un`;
+      document.getElementById('dash-vials-val').innerText = `${totalStockMg.toFixed(1)} mg (Saldo total)`;
+      document.getElementById('dash-profiles-val').innerText = activeProfiles.length;
+      document.getElementById('dash-weekly-mg').innerText = `${weeklyMg.toFixed(1)} mg / ${weeklySyringesCount} seringas sem.`;
+
+      const weeksRemainingVials = weeklyMg > 0 ? (totalStockMg / weeklyMg) : 0;
+      const targetDateVials = new Date();
+      targetDateVials.setDate(targetDateVials.getDate() + Math.round(weeksRemainingVials * 7));
+      document.getElementById('dash-depletion-date').innerText = weeklyMg > 0 ? targetDateVials.toLocaleDateString('pt-BR') : 'Indefinido';
+
+      document.getElementById('dash-agenda-list').innerHTML = activeProfiles.length === 0 ? '<p class="text-slate-400">Nenhum paciente ativo.</p>' :
+        activeProfiles.map(p => `
+          <div class="flex justify-between items-center p-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
+            <div>
+              <span class="font-bold text-slate-800 dark:text-white block">${p.name}</span>
+              <span class="text-slate-500 dark:text-slate-400">Dia: ${p.day}</span>
+            </div>
+            <span class="font-extrabold text-sky-700 dark:text-sky-300 bg-sky-100 dark:bg-sky-950 px-2 py-1 rounded-lg">${p.doseMg} mg</span>
+          </div>
+        `).join('');
+
+      renderProjectionChart(totalStockMg, weeklyMg, totalSyringes, weeklySyringesCount);
+    }
+
+    function renderProjectionChart(currentStockMg, weeklyMg, currentSyringes, weeklySyringesCount) {
+      const ctx = document.getElementById('projectionChart').getContext('2d');
+      const labels = ['Hoje'];
+      const vialPoints = [currentStockMg];
+      const syringePoints = [currentSyringes];
+
+      let tempStock = currentStockMg;
+      let tempSyringes = currentSyringes;
+      const weeksToProject = Math.max(weeklyMg > 0 ? Math.ceil(currentStockMg / weeklyMg) : 0, weeklySyringesCount > 0 ? Math.ceil(currentSyringes / weeklySyringesCount) : 0, 6);
+
+      for (let i = 1; i <= weeksToProject; i++) {
+        labels.push(`Semana ${i}`);
+        tempStock = Math.max(0, tempStock - weeklyMg);
+        tempSyringes = Math.max(0, tempSyringes - weeklySyringesCount);
+        vialPoints.push(parseFloat(tempStock.toFixed(1)));
+        syringePoints.push(tempSyringes);
+        if (tempStock === 0 && tempSyringes === 0) break;
+      }
+
+      if (projectionChartInstance) projectionChartInstance.destroy();
+
+      projectionChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            { label: 'Ampolas (mg restantes)', data: vialPoints, borderColor: '#0284c7', backgroundColor: 'rgba(2, 132, 199, 0.1)', fill: true, tension: 0.2, yAxisID: 'y' },
+            { label: 'Seringas (unidades)', data: syringePoints, borderColor: '#10b981', borderDash: [5, 5], tension: 0.2, yAxisID: 'y1' }
+          ]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
+
+    function renderWeightTracking() {
+      const filterSelect = document.getElementById('weight-filter-profile');
+      const currentSelected = filterSelect ? filterSelect.value : 'all';
+
+      if (filterSelect) {
+        filterSelect.innerHTML = '<option value="all">Todos os Pacientes</option>' + 
+          (appState.profiles || []).map(p => `<option value="${p.name}" ${p.name === currentSelected ? 'selected' : ''}>${p.name}${p.active === false ? ' (Inativo)' : ''}</option>`).join('');
+      }
+
+      const selectedProfileName = filterSelect ? filterSelect.value : 'all';
+      const logsWithWeight = (appState.logs || []).filter(l => l.weight && l.weight > 0);
+      const filteredLogs = selectedProfileName === 'all' ? logsWithWeight : logsWithWeight.filter(l => l.profileName === selectedProfileName);
+      filteredLogs.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+      const ctx = document.getElementById('weightChart').getContext('2d');
+      if (weightChartInstance) weightChartInstance.destroy();
+
+      weightChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: filteredLogs.map(l => l.date),
+          datasets: [{ label: 'Peso (kg)', data: filteredLogs.map(l => l.weight), borderColor: '#10b981', tension: 0.2 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+
+      document.getElementById('weight-table-body').innerHTML = filteredLogs.map(l => `
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+          <td class="p-3 font-medium">${l.date}</td>
+          <td class="p-3 font-semibold">${l.profileName}</td>
+          <td class="p-3 font-bold text-emerald-700 dark:text-emerald-400">${l.weight} kg</td>
+          <td class="p-3">${l.mg} mg</td>
+        </tr>
+      `).join('');
+    }
+
     function closeModals() {
-      document.querySelectorAll('#modal-profile, #modal-inflow, #modal-log, #modal-drive').forEach(m => m.classList.add('hidden'));
+      document.querySelectorAll('#modal-profile, #modal-inflow, #modal-log, #modal-drive, #modal-case').forEach(m => m.classList.add('hidden'));
     }
 
     function openProfileModal() {
@@ -1600,16 +1403,14 @@
     }
 
     function editProfile(id) {
-      const profile = (appState.profiles || []).find(p => p.id === id);
-      if (!profile) return;
-
+      const p = (appState.profiles || []).find(x => x.id === id);
+      if (!p) return;
       document.getElementById('modal-profile-title').innerText = 'Editar Perfil e Dosagem';
-      document.getElementById('edit-profile-id').value = profile.id;
-      document.getElementById('new-profile-name').value = profile.name;
-      document.getElementById('new-profile-dose').value = profile.doseMg;
-      document.getElementById('new-profile-day').value = profile.day;
-      document.getElementById('new-profile-active').checked = profile.active !== false;
-      
+      document.getElementById('edit-profile-id').value = p.id;
+      document.getElementById('new-profile-name').value = p.name;
+      document.getElementById('new-profile-dose').value = p.doseMg;
+      document.getElementById('new-profile-day').value = p.day;
+      document.getElementById('new-profile-active').checked = p.active !== false;
       document.getElementById('modal-profile').classList.remove('hidden');
     }
 
@@ -1620,15 +1421,12 @@
       const day = document.getElementById('new-profile-day').value;
       const active = document.getElementById('new-profile-active').checked;
 
-      if (!name) return alert('Informe o nome do paciente.');
-
+      if (!name) return alert('Informe o nome.');
       if (!appState.profiles) appState.profiles = [];
 
       if (id) {
         const idx = appState.profiles.findIndex(p => p.id === id);
-        if (idx !== -1) {
-          appState.profiles[idx] = { id, name, doseMg, day, active };
-        }
+        if (idx !== -1) appState.profiles[idx] = { id, name, doseMg, day, active };
       } else {
         appState.profiles.push({ id: Date.now().toString(), name, doseMg, day, active });
       }
@@ -1640,39 +1438,34 @@
 
     function toggleProfileStatus(id) {
       if (!isAdmin) return;
-      const profile = (appState.profiles || []).find(p => p.id === id);
-      if (!profile) return;
-
-      profile.active = profile.active === false ? true : false;
-      updateUI();
-      pushToDrive();
+      const p = (appState.profiles || []).find(x => x.id === id);
+      if (p) { p.active = p.active === false ? true : false; updateUI(); pushToDrive(); }
     }
 
     function deleteProfile(id) {
-      if (confirm('Deseja realmente excluir este paciente?')) {
-        appState.profiles = (appState.profiles || []).filter(p => p.id !== id);
+      if (confirm('Excluir este paciente?')) {
+        appState.profiles = appState.profiles.filter(p => p.id !== id);
         updateUI();
         pushToDrive();
       }
     }
 
     function openAddStockModal(defaultType = 'seringa') {
-      if (!isAdmin) return alert('Apenas administradores podem registrar abastecimento.');
+      if (!isAdmin) return alert('Apenas administradores.');
       document.getElementById('inflow-type').value = defaultType;
       document.getElementById('inflow-date').value = new Date().toISOString().split('T')[0];
+      
+      const caseSelect = document.getElementById('inflow-ampoule-case');
+      caseSelect.innerHTML = (appState.cases || []).map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
+
       toggleInflowFields();
       document.getElementById('modal-inflow').classList.remove('hidden');
     }
 
     function toggleInflowFields() {
       const type = document.getElementById('inflow-type').value;
-      if (type === 'seringa') {
-        document.getElementById('inflow-syringes-fields').classList.remove('hidden');
-        document.getElementById('inflow-ampoule-fields').classList.add('hidden');
-      } else {
-        document.getElementById('inflow-syringes-fields').classList.add('hidden');
-        document.getElementById('inflow-ampoule-fields').classList.remove('hidden');
-      }
+      document.getElementById('inflow-syringes-fields').classList.toggle('hidden', type !== 'seringa');
+      document.getElementById('inflow-ampoule-fields').classList.toggle('hidden', type !== 'ampola');
     }
 
     function saveStockInflow() {
@@ -1686,37 +1479,22 @@
       if (!appState.syringes) appState.syringes = { "50 UI (0,5 mL)": 0, "100 UI (1,0 mL)": 0 };
 
       if (type === 'seringa') {
-        const syringeType = document.getElementById('inflow-syringe-type').value;
+        const stype = document.getElementById('inflow-syringe-type').value;
         const qty = parseInt(document.getElementById('inflow-syringes-qty').value) || 0;
-        if (qty <= 0) return alert('Informe uma quantidade válida.');
-
-        appState.syringes[syringeType] = (appState.syringes[syringeType] || 0) + qty;
-        appState.inflows.unshift({
-          id: Date.now().toString(),
-          date,
-          type: 'Seringas',
-          name: `Seringas ${syringeType}`,
-          qtyDesc: `+${qty} Unidades`,
-          conc: '-',
-          note
-        });
+        appState.syringes[stype] = (appState.syringes[stype] || 0) + qty;
+        appState.inflows.unshift({ id: Date.now().toString(), date, type: 'Seringas', name: `Seringas ${stype}`, qtyDesc: `+${qty} Unidades`, conc: '-', note });
       } else {
         const name = document.getElementById('inflow-ampoule-name').value.trim();
+        const caseId = document.getElementById('inflow-ampoule-case').value;
         const mg = parseFloat(document.getElementById('inflow-ampoule-mg').value.replace(',', '.')) || 0;
         const conc = parseFloat(document.getElementById('inflow-ampoule-conc').value.replace(',', '.')) || 15;
+        if (!name || mg <= 0) return alert('Preencha os dados.');
 
-        if (!name || mg <= 0) return alert('Preencha os dados da ampola.');
+        const c = (appState.cases || []).find(x => x.id === caseId);
+        const caseTag = c ? ` [${c.icon} ${c.name}]` : '';
 
-        appState.stock.push({ id: Date.now().toString(), name, totalMg: mg, remainingMg: mg, conc });
-        appState.inflows.unshift({
-          id: Date.now().toString(),
-          date,
-          type: 'Ampola',
-          name,
-          qtyDesc: `+${mg} mg`,
-          conc: `${conc} mg/mL`,
-          note
-        });
+        appState.stock.push({ id: Date.now().toString(), name, caseId, totalMg: mg, remainingMg: mg, conc });
+        appState.inflows.unshift({ id: Date.now().toString(), date, type: 'Ampola', name: name + caseTag, qtyDesc: `+${mg} mg`, conc: `${conc} mg/mL`, note });
       }
 
       closeModals();
@@ -1744,7 +1522,6 @@
 
       const profileSelect = document.getElementById('log-profile-select');
       profileSelect.innerHTML = (appState.profiles || []).map(p => `<option value="${p.id}" ${p.name === log.profileName ? 'selected' : ''}>${p.name}</option>`).join('');
-
       updateStockOptionsValidation();
 
       document.getElementById('modal-log-title').innerText = 'Editar Registro de Aplicação';
@@ -1759,11 +1536,8 @@
     }
 
     function autoFillLogDose() {
-      const profileId = document.getElementById('log-profile-select').value;
-      const profile = (appState.profiles || []).find(p => p.id === profileId);
-      if (profile && !document.getElementById('edit-log-id').value) {
-        document.getElementById('log-mg').value = profile.doseMg;
-      }
+      const p = (appState.profiles || []).find(x => x.id === document.getElementById('log-profile-select').value);
+      if (p && !document.getElementById('edit-log-id').value) document.getElementById('log-mg').value = p.doseMg;
       updateStockOptionsValidation();
     }
 
@@ -1771,20 +1545,9 @@
       const desiredDose = parseFloat(document.getElementById('log-mg').value.replace(',', '.')) || 0;
       const stockSelect = document.getElementById('log-stock-select');
 
-      const validStocks = (appState.stock || []);
-      
-      if (validStocks.length === 0) {
-        stockSelect.innerHTML = `<option value="">Nenhuma ampola cadastrada no estoque</option>`;
-        return;
-      }
-
-      stockSelect.innerHTML = validStocks.map(s => {
-        const hasEnough = s.remainingMg >= desiredDose;
-        if (hasEnough) {
-          return `<option value="${s.id}">${s.name} (${s.remainingMg.toFixed(1)} mg restantes)</option>`;
-        } else {
-          return `<option value="${s.id}" disabled style="color: #94a3b8; background: #f1f5f9;">❌ ${s.name} (Saldo insuficiente: ${s.remainingMg.toFixed(1)} mg)</option>`;
-        }
+      stockSelect.innerHTML = (appState.stock || []).map(s => {
+        const ok = s.remainingMg >= desiredDose;
+        return `<option value="${s.id}" ${ok ? '' : 'disabled style="color: #94a3b8;"'}>${ok ? '' : '❌ '}${s.name} (${s.remainingMg.toFixed(1)} mg restantes)</option>`;
       }).join('');
     }
 
@@ -1801,45 +1564,19 @@
       const profile = (appState.profiles || []).find(p => p.id === profileId);
       const stock = (appState.stock || []).find(s => s.id === stockId);
 
-      if (!profile || !stock) return alert('Selecione uma pessoa e uma ampola válida.');
-      if (stock.remainingMg < mg) return alert('A ampola selecionada não possui saldo suficiente para esta dose!');
+      if (!profile || !stock) return alert('Selecione os campos.');
+      if (stock.remainingMg < mg) return alert('Saldo insuficiente na ampola!');
 
       const ui = Math.round((mg / stock.conc) * 100);
 
       if (editId) {
         const idx = appState.logs.findIndex(l => l.id === editId);
-        if (idx !== -1) {
-          appState.logs[idx] = {
-            id: editId,
-            date,
-            profileName: profile.name,
-            weight,
-            mg,
-            ui,
-            syringeType,
-            stockName: stock.name,
-            site
-          };
-        }
+        if (idx !== -1) appState.logs[idx] = { id: editId, date, profileName: profile.name, weight, mg, ui, syringeType, stockName: stock.name, site };
       } else {
-        if (!appState.syringes) appState.syringes = { "50 UI (0,5 mL)": 0, "100 UI (1,0 mL)": 0 };
-        if ((appState.syringes[syringeType] || 0) < 1) return alert(`Atenção: Você não possui seringas do tipo "${syringeType}" no estoque!`);
-        
+        if ((appState.syringes[syringeType] || 0) < 1) return alert(`Sem seringas de "${syringeType}"!`);
         appState.syringes[syringeType] -= 1;
         stock.remainingMg = Math.max(0, stock.remainingMg - mg);
-
-        if (!appState.logs) appState.logs = [];
-        appState.logs.unshift({
-          id: Date.now().toString(),
-          date,
-          profileName: profile.name,
-          weight,
-          mg,
-          ui,
-          syringeType,
-          stockName: stock.name,
-          site
-        });
+        appState.logs.unshift({ id: Date.now().toString(), date, profileName: profile.name, weight, mg, ui, syringeType, stockName: stock.name, site });
       }
 
       closeModals();
@@ -1849,7 +1586,7 @@
 
     function deleteLog(id) {
       if (!isAdmin) return;
-      if (confirm('Remover registro de aplicação?')) {
+      if (confirm('Remover registro?')) {
         appState.logs = appState.logs.filter(l => l.id !== id);
         updateUI();
         pushToDrive();
